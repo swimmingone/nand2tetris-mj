@@ -11,19 +11,11 @@ CHIP Xor {
     OUT out;
 
     PARTS:
-    /* impl 1*/
-    Nand(a=a, b=a, out=nota);
-    Nand(a=nota, b=b, out=NandNotAAndB);
-    Nand(a=NandNotAAndB,b=NandNotAAndB,out=NotAAndB);
+    Not(in=a,out=nota);
+    Not(in=b,out=notb);
 
+    And(a=nota,b=b,out=not-a-and-b);
+    And(a=a,b=notb,out=a-and-not-b);
 
-    Nand(a=b, b=b, out=notb);
-    Nand(a=a, b=notb, out=NandAAndNotB);
-    Nand(a=NandAAndNotB,b=NandAAndNotB,out=AAndNotB);
-
-
-    /* Or */
-    Nand(a=NotAAndB, b=NotAAndB, out=x);
-    Nand(a=AAndNotB, b=AAndNotB, out=y);
-    Nand(a=x, b=y, out=out);
+    Or(a=not-a-and-b,b=a-and-not-b,out=out);
 }

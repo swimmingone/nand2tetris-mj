@@ -6,10 +6,15 @@
  * Or gate:
  * if ((a == 1) or (b == 1)) out = 1, else out = 0 
  */
+ /**
+  !(!a & !b)
+ */
 CHIP Or {
     IN a, b;
     OUT out;
 
     PARTS:
-    //// Replace this comment with your code.
+    Nand(a=a, b=a, out=nota);
+    Nand(a=b, b=b, out=notb);
+    Nand(a=nota, b=notb, out=out);
 }

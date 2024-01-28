@@ -12,6 +12,7 @@ CHIP Inc16 {
 
     PARTS:
     //// Replace this comment with your code.
+    // Add16(a=in,b[0]=true,out=out); https://people.duke.edu/~nts9/logicgates/Inc16.hdl
     HalfAdder(a=in[0],b=true,carry=carry0,sum=out[0]);
     HalfAdder(a=in[1],b=carry0,carry=carry1,sum=out[1]);
     HalfAdder(a=in[2],b=carry1,carry=carry2,sum=out[2]);

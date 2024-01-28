@@ -12,4 +12,11 @@ CHIP FullAdder {
 
     PARTS:
     //// Replace this comment with your code.
+    // a + b -> sumprime, carryprime
+    // c + sumprime, 
+
+    HalfAdder(a=a,b=b,sum=sumprime,carry=carryprime);
+    // c, sumprime, carryprime
+    HalfAdder(a=sumprime,b=c,sum=sum,carry=carryprime2);
+    Or(a=carryprime,b=carryprime2,out=carry);
 }

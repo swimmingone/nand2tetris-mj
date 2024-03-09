@@ -1,9 +1,24 @@
 package kim.myeongjae.hackassembler
 
 fun assembleCInstruction(input: String): String {
-    val dest = input.substringBefore("=")
-    val comp = input.substringAfter("=").substringBefore(";")
-    val jump = input.substringAfter(";", "")
+    // =가 생략된 경우 -> comp만 있다.
+    // ;가 생략된 경우, 아닌 경우
+
+    val dest = when {
+        input.contains("=") -> input.substringBefore("=")
+        else -> ""
+    }
+
+    val comp = when {
+        input.contains("=") -> input.substringAfter("=").substringBefore(";")
+        input.contains(";") -> input.substringBefore(";")
+        else -> input
+    }
+
+    val jump = when {
+        input.contains(";") -> input.substringAfter(";")
+        else -> ""
+    }
 
     val destBinary = when (dest) {
         "" -> "000"
@@ -50,6 +65,7 @@ fun assembleCInstruction(input: String): String {
     }
 
     val jumpBinary = when (jump) {
+        "" -> "000"
         "JGT" -> "001"
         "JEQ" -> "010"
         "JGE" -> "011"
@@ -57,7 +73,7 @@ fun assembleCInstruction(input: String): String {
         "JNE" -> "101"
         "JLE" -> "110"
         "JMP" -> "111"
-        else -> "000"
+        else -> throw IllegalArgumentException("Invalid jump: $jump")
     }
 
     return "111$compBinary$destBinary$jumpBinary"

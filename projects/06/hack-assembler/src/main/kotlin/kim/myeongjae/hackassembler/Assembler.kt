@@ -10,7 +10,7 @@ private tailrec fun assemble(input: List<String>, result: List<String> = listOf(
         return result
     }
 
-    val head = input.first()
+    val head = input.first().trim()
     val tail = input.drop(1)
 
     return when{

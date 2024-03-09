@@ -3,12 +3,14 @@ package kim.myeongjae.hackassembler
 fun preprocess(input: String): String {
     val lines = removeCommentsAndBlankLines(input.split(System.lineSeparator()))
     val (labelRemovedLines, labelMap) = createLabelMap(lines)
-    val symbolRemovedLines = replacePredefinedSymbols(labelRemovedLines)
+    val symbolReplacedLines = replacePredefinedSymbols(labelRemovedLines)
 
-    return replaceLabelWithLineNumber(
-        symbolRemovedLines,
+    val labelReplacedLines = replaceLabelWithLineNumber(
+        symbolReplacedLines,
         labelMap
-    ).joinToString(System.lineSeparator())
+    )
+
+    return replaceVariables(labelReplacedLines).joinToString(System.lineSeparator())
 }
 
 private tailrec fun removeCommentsAndBlankLines(input: List<String>, result: List<String> = listOf()): List<String> {
@@ -69,7 +71,7 @@ private tailrec fun replaceLabelWithLineNumber(
     return when {
         head.isAInstruction() -> {
             val label = head.substring(1)
-            val lineNumber = labelMap[label] ?: label.toInt()
+            val lineNumber = labelMap[label] ?: label
             replaceLabelWithLineNumber(tail, labelMap, result + "@$lineNumber")
         }
 
@@ -125,4 +127,39 @@ private tailrec fun replacePredefinedSymbols(
             replacePredefinedSymbols(tail, result + head)
         }
     }
+}
+
+private tailrec fun replaceVariables(
+    input: List<String>,
+    variableMap: Map<String, Int> = mapOf(),
+    nextVariableAddress: Int = 16,
+    result: List<String> = listOf()
+): List<String> {
+    if (input.isEmpty()) {
+        return result;
+    }
+
+    val head = input.first()
+    val tail = input.drop(1)
+
+    if (!head.isAInstruction()) {
+        return replaceVariables(tail, variableMap, nextVariableAddress, result + head)
+    }
+
+    val value = head.substring(1)
+    val isVariable = value.toIntOrNull() == null
+
+    if (!isVariable) {
+        return replaceVariables(tail, variableMap, nextVariableAddress, result + head)
+    }
+
+    val variableAddress = variableMap[value]
+    val isAlreadyDeclaredVariable = variableAddress != null
+
+    if (isAlreadyDeclaredVariable) {
+        return replaceVariables(tail, variableMap, nextVariableAddress, result + "@$variableAddress")
+    }
+
+    val newVariableMap = variableMap + (value to nextVariableAddress)
+    return replaceVariables(tail, newVariableMap, nextVariableAddress + 1, result + "@$nextVariableAddress")
 }

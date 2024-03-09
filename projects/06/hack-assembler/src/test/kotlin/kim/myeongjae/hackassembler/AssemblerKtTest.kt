@@ -138,4 +138,79 @@ class AssemblerKtTest : StringSpec({
             1110101010000111
         """.trimIndent()
     }
+
+    "Rect" {
+        assemble(
+            """
+           // This file is part of www.nand2tetris.org
+           // and the book "The Elements of Computing Systems"
+           // by Nisan and Schocken, MIT Press.
+           // File name: projects/06/rect/Rect.asm
+
+           // Draws a rectangle at the top-left corner of the screen.
+           // The rectangle is 16 pixels wide and R0 pixels high.
+
+              // If (R0 <= 0) goto END else n = R0
+              @R0
+              D=M
+              @END
+              D;JLE 
+              @n
+              M=D
+              // addr = base address of first screen row
+              @SCREEN
+              D=A
+              @addr
+              M=D
+           (LOOP)
+              // RAM[addr] = -1
+              @addr
+              A=M
+              M=-1
+              // addr = base address of next screen row
+              @addr
+              D=M
+              @32
+              D=D+A
+              @addr
+              M=D
+              // decrements n and loops
+              @n
+              M=M-1
+              D=M
+              @LOOP
+              D;JGT
+           (END)
+              @END
+              0;JMP
+       """.trimIndent()
+        ) shouldBe """
+            0000000000000000
+            1111110000010000
+            0000000000011000
+            1110001100000110
+            0000000000010000
+            1110001100001000
+            0100000000000000
+            1110110000010000
+            0000000000010001
+            1110001100001000
+            0000000000010001
+            1111110000100000
+            1110111010001000
+            0000000000010001
+            1111110000010000
+            0000000000100000
+            1110000010010000
+            0000000000010001
+            1110001100001000
+            0000000000010000
+            1111110010001000
+            1111110000010000
+            0000000000001010
+            1110001100000001
+            0000000000011000
+            1110101010000111
+        """.trimIndent()
+    }
 })

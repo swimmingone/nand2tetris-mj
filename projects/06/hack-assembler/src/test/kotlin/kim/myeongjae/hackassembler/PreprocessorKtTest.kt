@@ -60,4 +60,79 @@ class PreprocessorKtTest : StringSpec({
             0;JMP
         """.trimIndent()
     }
+
+    "Rect to RectL" {
+        preprocess(
+            """
+           // This file is part of www.nand2tetris.org
+           // and the book "The Elements of Computing Systems"
+           // by Nisan and Schocken, MIT Press.
+           // File name: projects/06/rect/Rect.asm
+
+           // Draws a rectangle at the top-left corner of the screen.
+           // The rectangle is 16 pixels wide and R0 pixels high.
+
+              // If (R0 <= 0) goto END else n = R0
+              @R0
+              D=M
+              @END
+              D;JLE 
+              @n
+              M=D
+              // addr = base address of first screen row
+              @SCREEN
+              D=A
+              @addr
+              M=D
+           (LOOP)
+              // RAM[addr] = -1
+              @addr
+              A=M
+              M=-1
+              // addr = base address of next screen row
+              @addr
+              D=M
+              @32
+              D=D+A
+              @addr
+              M=D
+              // decrements n and loops
+              @n
+              M=M-1
+              D=M
+              @LOOP
+              D;JGT
+           (END)
+              @END
+              0;JMP
+       """.trimIndent()
+        ) shouldBe """
+            @0
+            D=M
+            @24
+            D;JLE
+            @16
+            M=D
+            @16384
+            D=A
+            @17
+            M=D
+            @17
+            A=M
+            M=-1
+            @17
+            D=M
+            @32
+            D=D+A
+            @17
+            M=D
+            @16
+            M=M-1
+            D=M
+            @10
+            D;JGT
+            @24
+            0;JMP
+        """.trimIndent()
+    }
 })

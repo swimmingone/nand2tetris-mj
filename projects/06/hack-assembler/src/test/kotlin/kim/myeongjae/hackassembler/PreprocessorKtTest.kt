@@ -2,6 +2,7 @@ package kim.myeongjae.hackassembler
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import java.io.File
 
 class PreprocessorKtTest : StringSpec({
 
@@ -134,5 +135,12 @@ class PreprocessorKtTest : StringSpec({
             @24
             0;JMP
         """.trimIndent()
+    }
+
+    "Pong.asm to PongL.asm" {
+        val input = File("src/test/resources/Pong.asm").readText()
+
+        preprocess(input).trim() shouldBe File("src/test/resources/PongL.asm").readText()
+            .replace("\r\n", System.lineSeparator()).trim()
     }
 })

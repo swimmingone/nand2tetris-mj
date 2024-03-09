@@ -13,12 +13,13 @@ private tailrec fun assemble(input: List<String>, result: List<String> = listOf(
     val head = input.first().trim()
     val tail = input.drop(1)
 
+    // TODO: 전처리작업 없애기. preprocessor에서 하므로
     return when{
         head.isBlank() -> return assemble(tail, result)
         head.startsWith("//") -> return assemble(tail, result)
         else -> {
             val assembled = when {
-                head.startsWith("@") -> assembleAInstruction(head)
+                head.isAInstruction() -> assembleAInstruction(head)
                 else -> assembleCInstruction(head)
             }
             assemble(tail, result + assembled)

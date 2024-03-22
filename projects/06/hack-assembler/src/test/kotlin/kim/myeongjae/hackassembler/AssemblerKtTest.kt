@@ -2,6 +2,7 @@ package kim.myeongjae.hackassembler
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import java.io.File
 
 class AssemblerKtTest : StringSpec({
 
@@ -212,5 +213,19 @@ class AssemblerKtTest : StringSpec({
             0000000000011000
             1110101010000111
         """.trimIndent()
+    }
+
+    "PongL.asm to Pong.hack" {
+        val input = File("src/test/resources/PongL.asm").readText()
+
+        assemble(input).trim() shouldBe File("src/test/resources/Pong.hack").readText()
+            .replace("\r\n", System.lineSeparator()).trim()
+    }
+
+    "Pong.asm to Pong.hack" {
+        val input = File("src/test/resources/Pong.asm").readText()
+
+        assemble(input).trim() shouldBe File("src/test/resources/Pong.hack").readText()
+            .replace("\r\n", System.lineSeparator()).trim()
     }
 })

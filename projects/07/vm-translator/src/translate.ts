@@ -1,4 +1,4 @@
-export const translate = (code: string): string[] => {
+export const translate = (code: string): string => {
   if (code.includes('\n')) {
     throw new Error('Not supported');
   }
@@ -16,9 +16,7 @@ M=D
 // SP++
 @SP
 M=M+1
-  `
-      .trim()
-      .split('\n');
+  `.trim();
   }
 
   if (code === 'add') {
@@ -43,7 +41,7 @@ A=M
 M=D
 // SP++
 @SP
-M=M+1`.split('\n');
+M=M+1`;
   }
 
   throw new Error('Not implemented');

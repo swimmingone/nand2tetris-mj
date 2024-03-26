@@ -25,7 +25,7 @@ describe('StackAdd', () => {
       .filter((it) => !it.startsWith('//'))
       .filter((it) => !!it.trim());
 
-    const actualAsm = vmCommandSplit.map((it) => translate(it).join('\n')).join('\n\n');
+    const actualAsm = vmCommandSplit.map((it) => translate(it)).join('\n\n');
 
     expect(simpleAddAsm.trim()).toEqual(actualAsm.trim());
   });

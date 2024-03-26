@@ -11,7 +11,7 @@ describe('translate', () => {
   });
 
   it('should translate "push constant 7"', () => {
-    expect(translate('push constant 7').join('\n')).toEqual(
+    expect(translate('push constant 7')).toEqual(
       `
 // push constant 7
 @7
@@ -27,7 +27,7 @@ M=M+1
   });
 
   it('should translate "push constant 8"', () => {
-    expect(translate('push constant 8').join('\n')).toEqual(
+    expect(translate('push constant 8')).toEqual(
       `
 // push constant 8
 @8
@@ -43,7 +43,7 @@ M=M+1
   });
 
   it('should handle "add"', () => {
-    expect(translate('add').join('\n')).toEqual(
+    expect(translate('add')).toEqual(
       `// add
 // pop to D
 @SP

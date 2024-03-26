@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import { translate } from '../src/translate';
+import { translateDefaultOptions } from './testHelper';
 
 const readFile = (path: string): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -25,8 +26,10 @@ describe('StackAdd', () => {
       .filter((it) => !it.startsWith('//'))
       .filter((it) => !!it.trim());
 
-    const actualAsm = vmCommandSplit.map((it) => translate(it)).join('\n\n');
+    const actualAsm = vmCommandSplit
+      .map((it) => translate(it, translateDefaultOptions()))
+      .join('\n\n');
 
-    expect(simpleAddAsm.trim()).toEqual(actualAsm.trim());
+    expect(actualAsm.trim()).toEqual(simpleAddAsm.trim());
   });
 });

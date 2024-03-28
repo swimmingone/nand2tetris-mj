@@ -183,4 +183,59 @@ describe('translate', () => {
 
     expect(jumpCount).toBe(1);
   });
+
+  it('should handle "gt"', () => {
+    let jumpCount = 0;
+    expect(
+      translate('gt', {
+        jumpCount,
+        setJumpCount: (count) => {
+          jumpCount = count;
+        },
+      }),
+    ).toEqual(
+      `// gt
+// pop
+   @SP
+   M=M-1
+   A=M
+   D=M
+
+// pop
+   @SP
+   M=M-1
+   A=M
+
+// gt
+   D=M-D
+   @TRUE0
+   D;JGT
+
+   @SP
+   A=M
+   M=0
+
+   @END0
+   0;JEQ
+
+(TRUE0)
+   @0
+   A=A-1
+   D=A
+   @SP
+   A=M
+   M=D
+
+   @SP
+   A=M
+   M=D
+// SP++
+(END0)
+   @SP
+   M=M+1
+   `.trim(),
+    );
+
+    expect(jumpCount).toBe(1);
+  });
 });

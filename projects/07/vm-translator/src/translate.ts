@@ -280,8 +280,56 @@ M=D
 M=M+1`;
     }
 
+    if (code === 'or') {
+      return `// or
+// pop to D
+@SP
+M=M-1
+A=M
+D=M
+
+// pop to A
+@SP
+M=M-1
+A=M
+
+// or
+D=M|D
+
+// push
+@SP
+A=M
+M=D
+// SP++
+@SP
+M=M+1`;
+    }
+
     throw new Error('Not implemented');
   };
+
+  if (code === 'not') {
+    const asm = `// not
+// pop
+   @SP
+   M=M-1
+   A=M
+   D=M
+
+// not
+   D=!D
+
+// push D to stack
+   @SP
+   A=M
+   M=D
+// SP++
+   @SP
+   M=M+1`.trim();
+
+    options.setJumpCount(options.jumpCount + 1);
+    return asm;
+  }
 
   return fixIndent(_translate(code, options));
 };

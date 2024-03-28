@@ -315,4 +315,53 @@ describe('translate', () => {
    M=M+1`.trim(),
     );
   });
+
+  it('should handle "or"', () => {
+    expect(translate('or', translateDefaultOptions())).toEqual(
+      `// or
+// pop to D
+   @SP
+   M=M-1
+   A=M
+   D=M
+
+// pop to A
+   @SP
+   M=M-1
+   A=M
+
+// or
+   D=M|D
+
+// push
+   @SP
+   A=M
+   M=D
+// SP++
+   @SP
+   M=M+1`.trim(),
+    );
+  });
+
+  it('should handle "not"', () => {
+    expect(translate('not', translateDefaultOptions())).toEqual(
+      `// not
+// pop
+   @SP
+   M=M-1
+   A=M
+   D=M
+
+// not
+   D=!D
+
+// push D to stack
+   @SP
+   A=M
+   M=D
+// SP++
+   @SP
+   M=M+1`.trim(),
+    );
+  });
 });

@@ -31,7 +31,7 @@
    A=M
 
 // eq
-   D=D-M
+   D=M-D
    @TRUE0
    D;JEQ
 

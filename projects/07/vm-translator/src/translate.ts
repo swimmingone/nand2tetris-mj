@@ -82,7 +82,7 @@ M=M+1`;
    A=M
    
 // eq
-   D=D-M
+   D=M-D
    @TRUE${options.jumpCount}
    D;JEQ
 

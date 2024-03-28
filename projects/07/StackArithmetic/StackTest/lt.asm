@@ -5,7 +5,7 @@
    M=D
    
    // push
-   @17
+   @892
    D=A
    @SP
    A=M
@@ -15,7 +15,7 @@
    M=M+1
    
    // push
-   @17
+   @891
    D=A
    @SP
    A=M
@@ -36,10 +36,10 @@
    M=M-1
    A=M
    
-   // eq
+   // lt
    D=M-D
    @TRUE0
-   D;JEQ
+   D;JLT
 
    @SP
    A=M

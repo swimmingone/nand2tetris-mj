@@ -19,14 +19,14 @@ describe('translate', () => {
     expect(translate('push constant 7', translateDefaultOptions())).toEqual(
       `
 // push constant 7
-@7
-D=A
-@SP
-A=M
-M=D
+   @7
+   D=A
+   @SP
+   A=M
+   M=D
 // SP++
-@SP
-M=M+1
+   @SP
+   M=M+1
     `.trim(),
     );
   });
@@ -35,14 +35,14 @@ M=M+1
     expect(translate('push constant 8', translateDefaultOptions())).toEqual(
       `
 // push constant 8
-@8
-D=A
-@SP
-A=M
-M=D
+   @8
+   D=A
+   @SP
+   A=M
+   M=D
 // SP++
-@SP
-M=M+1
+   @SP
+   M=M+1
     `.trim(),
     );
   });
@@ -51,26 +51,26 @@ M=M+1
     expect(translate('add', translateDefaultOptions())).toEqual(
       `// add
 // pop to D
-@SP
-M=M-1
-A=M
-D=M
+   @SP
+   M=M-1
+   A=M
+   D=M
 
 // pop to A
-@SP
-M=M-1
-A=M
+   @SP
+   M=M-1
+   A=M
 
 // add
-D=D+M
+   D=D+M
 
 // push
-@SP
-A=M
-M=D
+   @SP
+   A=M
+   M=D
 // SP++
-@SP
-M=M+1`.trim(),
+   @SP
+   M=M+1`.trim(),
     );
   });
 
@@ -85,29 +85,29 @@ M=M+1`.trim(),
       }),
     ).toEqual(
       `// eq
-   // pop 
+// pop
    @SP
    M=M-1
    A=M
    D=M
-   
-   // pop 
+
+// pop
    @SP
    M=M-1
    A=M
-   
-   // eq
-   D=D-M
+
+// eq
+   D=M-D
    @TRUE0
    D;JEQ
 
    @SP
    A=M
    M=0
-   
+
    @END0
    0;JEQ
-   
+
 (TRUE0)
    @0
    A=A-1
@@ -115,11 +115,11 @@ M=M+1`.trim(),
    @SP
    A=M
    M=D
-   
+
    @SP
    A=M
    M=D
-   // SP++
+// SP++
 (END0)
    @SP
    M=M+1

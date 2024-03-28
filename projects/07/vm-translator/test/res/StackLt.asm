@@ -1,10 +1,4 @@
-// init
-   @256
-   D=A
-   @SP
-   M=D
-
-// push contant 892
+// push constant 892
    @892
    D=A
    @SP
@@ -14,7 +8,7 @@
    @SP
    M=M+1
 
-// push contant 891
+// push constant 891
    @891
    D=A
    @SP

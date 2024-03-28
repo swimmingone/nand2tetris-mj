@@ -265,4 +265,27 @@ describe('translate', () => {
    M=M+1`.trim(),
     );
   });
+
+  it('should handle "neg"', () => {
+    expect(translate('neg', translateDefaultOptions())).toEqual(
+      `// neg
+// pop
+   @SP
+   M=M-1
+   A=M
+   D=M
+
+// neg
+   @0
+   D=A-D
+
+// push D to stack
+   @SP
+   A=M
+   M=D
+// SP++
+   @SP
+   M=M+1`.trim(),
+    );
+  });
 });

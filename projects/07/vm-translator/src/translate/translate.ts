@@ -43,43 +43,28 @@ export const translate = (code: string, options: TranslateOptions): string => {
       return pushConstant(value);
     }
 
-    if (code === 'add') {
-      return add();
+    switch (code) {
+      case 'add':
+        return add();
+      case 'sub':
+        return sub();
+      case 'and':
+        return and();
+      case 'or':
+        return or();
+      case 'eq':
+        return eq(options);
+      case 'lt':
+        return lt(options);
+      case 'gt':
+        return gt(options);
+      case 'neg':
+        return neg();
+      case 'not':
+        return not();
+      default:
+        throw new Error('Not implemented');
     }
-
-    if (code === 'sub') {
-      return sub();
-    }
-
-    if (code === 'and') {
-      return and();
-    }
-
-    if (code === 'or') {
-      return or();
-    }
-
-    if (code === 'eq') {
-      return eq(options);
-    }
-
-    if (code === 'lt') {
-      return lt(options);
-    }
-
-    if (code === 'gt') {
-      return gt(options);
-    }
-
-    if (code === 'neg') {
-      return neg();
-    }
-
-    if (code === 'not') {
-      return not();
-    }
-
-    throw new Error('Not implemented');
   };
 
   return fixIndent(_translate(code, options));

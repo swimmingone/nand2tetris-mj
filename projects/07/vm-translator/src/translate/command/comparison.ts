@@ -1,7 +1,18 @@
 import { TranslateOptions } from '../translate';
 
-export const eq = (options: TranslateOptions): string => {
-  const asm = `// eq
+export const comparison = (command: 'eq' | 'lt' | 'gt', options: TranslateOptions): string => {
+  const instruction = (() => {
+    switch (command) {
+      case 'eq':
+        return 'JEQ';
+      case 'lt':
+        return 'JLT';
+      case 'gt':
+        return 'JGT';
+    }
+  })();
+
+  const asm = `// ${command}
 // pop
    @SP
    M=M-1
@@ -13,10 +24,10 @@ export const eq = (options: TranslateOptions): string => {
    M=M-1
    A=M
    
-// eq
+// ${command}
    D=M-D
    @TRUE${options.jumpCount}
-   D;JEQ
+   D;${instruction}
 
    @SP
    A=M

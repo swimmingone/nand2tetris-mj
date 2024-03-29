@@ -1,13 +1,8 @@
 import { pushConstant } from './command/push/constant';
-import { add } from './command/add';
-import { sub } from './command/sub';
-import { and } from './command/and';
-import { or } from './command/or';
-import { eq } from './command/eq';
-import { lt } from './command/lt';
-import { gt } from './command/gt';
-import { neg } from './command/neg';
-import { not } from './command/not';
+import { comparison } from './command/comparison';
+import { logical } from './command/logical';
+import { arithmatic } from './command/arithmatic';
+import { unary } from './command/unary';
 
 export type TranslateOptions = {
   jumpCount: number;
@@ -45,23 +40,18 @@ export const translate = (code: string, options: TranslateOptions): string => {
 
     switch (code) {
       case 'add':
-        return add();
       case 'sub':
-        return sub();
+        return arithmatic(code);
       case 'and':
-        return and();
       case 'or':
-        return or();
+        return logical(code);
       case 'eq':
-        return eq(options);
       case 'lt':
-        return lt(options);
       case 'gt':
-        return gt(options);
+        return comparison(code, options);
       case 'neg':
-        return neg();
       case 'not':
-        return not();
+        return unary(code);
       default:
         throw new Error('Not implemented');
     }

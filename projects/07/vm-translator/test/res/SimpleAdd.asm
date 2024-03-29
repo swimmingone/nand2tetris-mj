@@ -31,7 +31,7 @@
    A=M
 
 // add
-   D=D+M
+   D=M+D
 
 // push
    @SP

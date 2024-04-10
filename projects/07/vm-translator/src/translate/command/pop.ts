@@ -1,14 +1,12 @@
-import { memoryAddresses, MemoryAddressKind } from '../memoryAddresses';
+import { memoryAddresses, MemoryAddressKind } from './memoryAddresses';
 
-export const pop =
-  (kind: MemoryAddressKind) =>
-  (value: string): string => {
-    if (kind === 'constant') {
-      throw new Error('Not implemented');
-    }
+export const pop = (kind: MemoryAddressKind, value: string): string => {
+  if (kind === 'constant') {
+    throw new Error('Not implemented');
+  }
 
-    if (kind === 'temp' || kind === 'pointer' || kind === 'static') {
-      return `
+  if (kind === 'temp' || kind === 'pointer' || kind === 'static') {
+    return `
 // pop ${kind} ${value}
 // pop to D
    @SP
@@ -21,9 +19,9 @@ export const pop =
 // set value to ${kind} ${value}
    M=D
 `.trim();
-    }
+  }
 
-    return `
+  return `
 // pop ${kind} ${value}
 // get memory address of ${kind} ${value}
    @${memoryAddresses[kind]}
@@ -47,4 +45,4 @@ export const pop =
 // set value to ${kind} ${value}
    M=D
 `.trim();
-  };
+};

@@ -17,7 +17,7 @@ M=M+1
   `.trim();
     }
 
-    if (kind === 'temp') {
+    if (kind === 'temp' || kind === 'pointer') {
       return `
 // push ${kind} ${value}
 // calculate memory address ${kind} ${value}

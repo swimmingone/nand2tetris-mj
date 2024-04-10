@@ -5,6 +5,7 @@ export const memoryAddresses = {
   this: 'THIS',
   that: 'THAT',
   temp: (index: number) => `R${5 + index}`,
+  pointer: (index: number) => (index === 0 ? 'THIS' : 'THAT'),
 } as const;
 
 export type MemoryAddressKind = keyof typeof memoryAddresses;

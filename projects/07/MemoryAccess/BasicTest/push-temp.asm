@@ -24,7 +24,6 @@
    @THAT
    M=D
 
-
 // push constant 10
    @10
    D=A
@@ -42,8 +41,9 @@
    A=M
    D=M
 
-// set value to temp 0
+// get memory address of temp 0
    @R5
+// set value to temp 0
    M=D
 
 // push constant 11
@@ -56,13 +56,17 @@
    @SP
    M=M+1
 
-// pop temp 1
-// pop to D
-   @SP
-   M=M-1
-   A=M
+// push temp 0
+// calculate memory address temp 0
+   @R5
+
+// set D as value of temp 0
    D=M
 
-// set value to temp 1
-   @R6
+// push
+   @SP
+   A=M
    M=D
+// SP++
+   @SP
+   M=M+1

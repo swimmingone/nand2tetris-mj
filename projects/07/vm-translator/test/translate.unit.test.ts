@@ -3,12 +3,6 @@ import { translate } from '../src/translate';
 import { translateDefaultOptions } from './testHelper';
 
 describe('translate', () => {
-  it('should support "push constant" only', () => {
-    expect(() => translate('push local 9', translateDefaultOptions())).toThrow(
-      new Error('Not implemented'),
-    );
-  });
-
   it('should not handle multiline vm codes', () => {
     expect(() => translate('push constant 7\npush constant 8', translateDefaultOptions())).toThrow(
       new Error('Not supported'),

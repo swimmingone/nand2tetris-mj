@@ -17,5 +17,42 @@ M=M+1
   `.trim();
     }
 
-    throw new Error('Not implemented');
+    if (kind === 'temp') {
+      return `
+// push ${kind} ${value}
+// calculate memory address ${kind} ${value}
+   @${memoryAddresses[kind](Number(value))}
+
+// set D as value of ${kind} ${value}
+   D=M
+
+// push
+   @SP
+   A=M
+   M=D
+// SP++
+   @SP
+   M=M+1
+    `.trim();
+    }
+
+    return `
+// push ${kind} ${value}
+// calculate memory address ${kind} ${value}
+   @${memoryAddresses[kind]}
+   D=M
+   @${value}
+   A=D+A
+
+// set D as value of ${kind} ${value}
+   D=M
+
+// push
+   @SP
+   A=M
+   M=D
+// SP++
+   @SP
+   M=M+1
+    `.trim();
   };

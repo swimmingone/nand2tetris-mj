@@ -12,11 +12,8 @@ export type PushKind = keyof typeof pushes;
 export const push =
   (kind: PushKind) =>
   (value: string): string => {
-    if (kind === 'temp') {
-      throw new Error('Not implemented');
-    }
-
-    return `
+    if (kind === 'constant') {
+      return `
   // push ${kind} ${value}
 @${value}
 D=A
@@ -27,4 +24,7 @@ M=D
 @${pushes[kind]}
 M=M+1
   `.trim();
+    }
+
+    throw new Error('Not implemented');
   };

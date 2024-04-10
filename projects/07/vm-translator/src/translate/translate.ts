@@ -2,7 +2,9 @@ import { comparison } from './command/comparison';
 import { logical } from './command/logical';
 import { arithmatic } from './command/arithmatic';
 import { unary } from './command/unary';
-import { push, PushKind } from './command/push/push';
+import { push } from './command/push/push';
+import { MemoryAddressKind } from './command/memoryAddresses';
+import { pop } from './command/pop/pop';
 
 export type TranslateOptions = {
   jumpCount: number;
@@ -34,8 +36,13 @@ export const translate = (code: string, options: TranslateOptions): string => {
     }
 
     if (code.startsWith('push ')) {
-      const [_, pushKind, value] = code.split(' ');
-      return push(pushKind as PushKind)(value);
+      const [_, memoryAddressKind, value] = code.split(' ');
+      return push(memoryAddressKind as MemoryAddressKind)(value);
+    }
+
+    if (code.startsWith('pop ')) {
+      const [_, memoryAddressKind, value] = code.split(' ');
+      return pop(memoryAddressKind as MemoryAddressKind)(value);
     }
 
     switch (code) {

@@ -1,27 +1,18 @@
-const pushes = {
-  constant: 'SP',
-  local: 'LCL',
-  argument: 'ARG',
-  this: 'THIS',
-  that: 'THAT',
-  temp: 'temp',
-} as const;
-
-export type PushKind = keyof typeof pushes;
+import { memoryAddresses, MemoryAddressKind } from '../memoryAddresses';
 
 export const push =
-  (kind: PushKind) =>
+  (kind: MemoryAddressKind) =>
   (value: string): string => {
     if (kind === 'constant') {
       return `
   // push ${kind} ${value}
 @${value}
 D=A
-@${pushes[kind]}
+@${memoryAddresses[kind]}
 A=M
 M=D
-// ${pushes[kind]}++
-@${pushes[kind]}
+// ${memoryAddresses[kind]}++
+@${memoryAddresses[kind]}
 M=M+1
   `.trim();
     }

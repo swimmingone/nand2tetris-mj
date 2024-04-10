@@ -1,8 +1,8 @@
-import { pushConstant } from './command/push/constant';
 import { comparison } from './command/comparison';
 import { logical } from './command/logical';
 import { arithmatic } from './command/arithmatic';
 import { unary } from './command/unary';
+import { push, PushKind } from './command/push/push';
 
 export type TranslateOptions = {
   jumpCount: number;
@@ -33,9 +33,9 @@ export const translate = (code: string, options: TranslateOptions): string => {
       throw new Error('Not supported');
     }
 
-    if (code.startsWith('push constant ')) {
-      const value = code.split('push constant ')[1];
-      return pushConstant(value);
+    if (code.startsWith('push ')) {
+      const [_, pushKind, value] = code.split(' ');
+      return push(pushKind as PushKind)(value);
     }
 
     switch (code) {

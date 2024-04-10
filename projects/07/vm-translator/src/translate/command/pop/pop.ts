@@ -7,7 +7,7 @@ export const pop =
       throw new Error('Not implemented');
     }
 
-    if (kind === 'temp' || kind === 'pointer') {
+    if (kind === 'temp' || kind === 'pointer' || kind === 'static') {
       return `
 // pop ${kind} ${value}
 // pop to D

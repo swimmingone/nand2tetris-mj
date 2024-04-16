@@ -42,7 +42,30 @@ export const translate = (code: string, options: TranslateOptions): string => {
 
     if (code.startsWith('pop ')) {
       const [_, memoryAddressKind, value] = code.split(' ');
-      return pop(memoryAddressKind as MemoryAddressKind, value);
+      return pop(memoryAddressKind as MemoryAddressKind, value.trim());
+    }
+
+    if (code.startsWith('label ')) {
+      const [_, label] = code.split(' ');
+      return `// label ${label}
+(${label})`;
+    }
+
+    if (code.startsWith('if-goto ')) {
+      const [_, label] = code.split(' ');
+      return `// if-goto ${label}
+   @SP
+   A=M
+   A=A-1
+   D=M
+
+// pop
+   @SP
+   M=M-1
+
+// jump
+   @${label}
+   D;JNE // D=2`;
     }
 
     switch (code) {

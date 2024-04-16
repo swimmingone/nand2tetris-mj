@@ -5,6 +5,7 @@ import { unary } from './command/unary';
 import { push } from './command/push';
 import { MemoryAddressKind } from './command/memoryAddresses';
 import { pop } from './command/pop';
+import { rt } from './command/return';
 
 export type TranslateOptions = {
   jumpCount: number;
@@ -75,6 +76,23 @@ export const translate = (code: string, options: TranslateOptions): string => {
    0;JMP`;
     }
 
+    if (code.startsWith('function ')) {
+      const [_, functionName, localVariablesCount] = code.split(' ');
+      return `// function ${functionName} ${localVariablesCount}
+   @${localVariablesCount}
+   D=A
+(${functionName}.init)
+   @SP
+   A=M
+   M=0
+   @SP
+   M=M+1
+
+   D=D-1
+   @${functionName}.init
+   D;JNE`;
+    }
+
     const zeroArgumentOperator = code.split(' ')[0];
     switch (zeroArgumentOperator) {
       case 'add':
@@ -90,6 +108,8 @@ export const translate = (code: string, options: TranslateOptions): string => {
       case 'neg':
       case 'not':
         return unary(zeroArgumentOperator);
+      case 'return':
+        return rt();
       default:
         throw new Error('Not implemented');
     }

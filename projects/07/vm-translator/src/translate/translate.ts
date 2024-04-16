@@ -68,20 +68,28 @@ export const translate = (code: string, options: TranslateOptions): string => {
    D;JNE // D=2`;
     }
 
-    switch (code) {
+    if (code.startsWith('goto ')) {
+      const [_, label] = code.split(' ');
+      return `// goto ${label}
+   @${label}
+   0;JMP`;
+    }
+
+    const zeroArgumentOperator = code.split(' ')[0];
+    switch (zeroArgumentOperator) {
       case 'add':
       case 'sub':
-        return arithmatic(code);
+        return arithmatic(zeroArgumentOperator);
       case 'and':
       case 'or':
-        return logical(code);
+        return logical(zeroArgumentOperator);
       case 'eq':
       case 'lt':
       case 'gt':
-        return comparison(code, options);
+        return comparison(zeroArgumentOperator, options);
       case 'neg':
       case 'not':
-        return unary(code);
+        return unary(zeroArgumentOperator);
       default:
         throw new Error('Not implemented');
     }

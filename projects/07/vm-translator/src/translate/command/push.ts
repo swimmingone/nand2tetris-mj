@@ -15,6 +15,8 @@ M=M+1
   `.trim();
   }
 
+  // TODO: 파일이 달라지면 static 영역이 달라져야 한다.
+  //  정확히는 클래스별로 static 영역이 달라져야 한다.
   if (kind === 'temp' || kind === 'pointer' || kind === 'static') {
     return `
 // push ${kind} ${value}

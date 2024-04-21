@@ -1,7 +1,10 @@
 // function SimpleFunction.test 2
+(SimpleFunction.test)
    @2
    D=A
-(SimpleFunction.test)
+   @SimpleFunction.test.init.end
+   D;JEQ
+(SimpleFunction.test.init)
    @SP
    A=M
    M=0
@@ -9,8 +12,9 @@
    M=M+1
 
    D=D-1
-   @SimpleFunction.test
+   @SimpleFunction.test.init
    D;JNE
+(SimpleFunction.test.init.end)
 
 // push local 0
 // calculate memory address local 0
@@ -182,6 +186,8 @@
    D=M
    @5
    D=D-A
+   A=D
+   D=M
    @R14 // retAddr
    M=D
 // *ARG = pop()

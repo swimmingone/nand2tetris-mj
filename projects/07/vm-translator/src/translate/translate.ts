@@ -79,8 +79,11 @@ export const translate = (code: string, options: TranslateOptions): string => {
     if (code.startsWith('function ')) {
       const [_, functionName, localVariablesCount] = code.split(' ');
       return `// function ${functionName} ${localVariablesCount}
+(${functionName})
    @${localVariablesCount}
    D=A
+   @${functionName}.init.end
+   D;JEQ
 (${functionName}.init)
    @SP
    A=M
@@ -90,7 +93,59 @@ export const translate = (code: string, options: TranslateOptions): string => {
 
    D=D-1
    @${functionName}.init
-   D;JNE`;
+   D;JNE
+(${functionName}.init.end)`;
+    }
+
+    if (code.startsWith('call ')) {
+      const pushDToStack = () => `
+   @SP
+   A=M
+   M=D
+   @SP
+   M=M+1`;
+
+      const jumpCount = options.jumpCount;
+      options.setJumpCount(options.jumpCount + 1);
+
+      const [_, functionName, argumentsCount] = code.split(' ');
+      return `// call ${functionName} ${argumentsCount}
+   @${functionName}.return.${jumpCount}
+   D=A
+   // save caller's environments
+${pushDToStack()}
+   @LCL
+   D=M
+${pushDToStack()}
+   @ARG
+   D=M
+${pushDToStack()}
+   @THIS
+   D=M
+${pushDToStack()}
+   @THAT
+   D=M
+${pushDToStack()}
+// update ARG and LCL for callee
+// ARG = SP - 5 - nArgs
+   @SP
+   D=M
+   @5
+   D=D-A
+   @${argumentsCount}
+   D=D-A
+   @ARG
+   M=D
+// LCL = SP
+   @SP
+   D=M
+   @LCL
+   M=D
+// goto function ${functionName}
+   @${functionName}
+   0;JMP
+(${functionName}.return.${jumpCount})
+   `;
     }
 
     const zeroArgumentOperator = code.split(' ')[0];

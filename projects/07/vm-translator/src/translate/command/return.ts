@@ -9,6 +9,8 @@ export const rt = (): string => `// return
    D=M
    @5
    D=D-A
+   A=D
+   D=M
    @R14 // retAddr
    M=D
 // *ARG = pop()

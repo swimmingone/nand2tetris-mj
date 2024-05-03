@@ -1,0 +1,4 @@
+node_modules/
+next.config.js
+tsconfig.json
+**/next.config.js

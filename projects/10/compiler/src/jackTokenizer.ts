@@ -48,6 +48,8 @@ const lexicalElements = {
   STRING_CONST: (str: string) => /^".*"$/.test(str),
 } as const;
 
+const symbolSet = new Set(lexicalElements.SYMBOL);
+
 export type JackTokenType = keyof typeof lexicalElements;
 export type JackKeyword = (typeof lexicalElements.KEYWORD)[number];
 type JackSymbol = (typeof lexicalElements.SYMBOL)[number];
@@ -127,8 +129,6 @@ export const jackTokenizer = (readLine: () => string | null): JackTokenizer => {
       const newToken = currentLine.substring(0, indexToSplit).trim();
       const newCurrentLine = currentLine.substring(indexToSplit).trim();
 
-      // TODO: if new token has a symbol, split it and add the symbol to new current line
-
       setCurrentTokenAndLine(newToken, newCurrentLine);
 
       if (isBlank(newToken)) {
@@ -160,6 +160,22 @@ export const jackTokenizer = (readLine: () => string | null): JackTokenizer => {
     if (isMultilineComment(currentToken)) {
       multilineCommentStarted = true;
       advanceWithCommentHandling();
+    }
+
+    // if a token has a symbol, split it and add the symbol to new current line
+    for (let i = 0; i < currentToken.length; i++) {
+      if (!symbolSet.has(currentToken[i] as any)) {
+        continue;
+      }
+
+      if (i === 0) {
+        currentLine = currentToken.substring(1) + currentLine;
+        currentToken = currentToken[0];
+        return;
+      } else {
+        currentLine = currentToken.substring(i) + currentLine;
+        currentToken = currentToken.substring(0, i);
+      }
     }
   };
 

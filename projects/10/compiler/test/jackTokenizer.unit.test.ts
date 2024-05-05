@@ -32,7 +32,9 @@ class Main {
         return;
     }
 }
-    `.split('\n');
+    `
+      .trim()
+      .split('\n');
 
     let currentLineNumber = 0;
     const readLine = () => {
@@ -43,13 +45,19 @@ class Main {
         return null;
       }
 
+      console.log('line: ', line);
+
       return line;
     };
 
     const tokenizer = jackTokenizer(readLine);
 
-    while (tokenizer.hasMoreTokens()) {
+    for (;;) {
       tokenizer.advance();
+      if (!tokenizer.hasMoreTokens()) {
+        break;
+      }
+
       console.log('tokenType: ', tokenizer.tokenType());
     }
   });

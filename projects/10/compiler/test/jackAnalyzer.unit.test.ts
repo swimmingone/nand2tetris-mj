@@ -22,10 +22,4 @@ describe('jackAnalyzer', () => {
       "ENOENT: no such file or directory, lstat './test/res/ExpressionLessSquare/Main.xml'",
     );
   });
-
-  it('should compile a directory', async () => {
-    const xmlPath = './test/res/Square/Square.xml';
-
-    await fileTestTemplate(() => jackAnalyzer('./test/res/Square'), xmlPath);
-  });
 });

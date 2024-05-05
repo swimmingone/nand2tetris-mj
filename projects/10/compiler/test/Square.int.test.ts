@@ -3,11 +3,11 @@ import { jackAnalyzer } from '../src/jackAnalyzer';
 import { fileTestTemplate } from './testHelper';
 import { readFilePromise } from '../src/readFilePromise';
 
-describe('ExpressionLessSquare', () => {
+describe('Square', () => {
   it('should compile Main.jack', async () => {
-    const jackPath = './test/res/ExpressionLessSquare/Main.jack';
-    const xmlPath = './test/res/ExpressionLessSquare/Main.xml';
-    const expectedXmlPath = './test/res/ExpressionLessSquare/MainT.xml';
+    const jackPath = './test/res/Square/Main.jack';
+    const xmlPath = './test/res/Square/Main.xml';
+    const expectedXmlPath = './test/res/Square/MainT.xml';
 
     await fileTestTemplate(async () => {
       await jackAnalyzer(jackPath);
@@ -22,9 +22,9 @@ describe('ExpressionLessSquare', () => {
   });
 
   it('should compile Square.jack', async () => {
-    const jackPath = './test/res/ExpressionLessSquare/Square.jack';
-    const xmlPath = './test/res/ExpressionLessSquare/Square.xml';
-    const expectedXmlPath = './test/res/ExpressionLessSquare/SquareT.xml';
+    const jackPath = './test/res/Square/Square.jack';
+    const xmlPath = './test/res/Square/Square.xml';
+    const expectedXmlPath = './test/res/Square/SquareT.xml';
 
     await fileTestTemplate(async () => {
       await jackAnalyzer(jackPath);
@@ -39,9 +39,9 @@ describe('ExpressionLessSquare', () => {
   });
 
   it('should compile SquareGame.jack', async () => {
-    const jackPath = './test/res/ExpressionLessSquare/SquareGame.jack';
-    const xmlPath = './test/res/ExpressionLessSquare/SquareGame.xml';
-    const expectedXmlPath = './test/res/ExpressionLessSquare/SquareGameT.xml';
+    const jackPath = './test/res/Square/SquareGame.jack';
+    const xmlPath = './test/res/Square/SquareGame.xml';
+    const expectedXmlPath = './test/res/Square/SquareGameT.xml';
 
     await fileTestTemplate(async () => {
       await jackAnalyzer(jackPath);
@@ -57,10 +57,10 @@ describe('ExpressionLessSquare', () => {
 
   it('should compile a directory', async () => {
     await fileTestTemplate(
-      () => jackAnalyzer('./test/res/ExpressionLessSquare'),
-      './test/res/ExpressionLessSquare/Square.xml',
-      './test/res/ExpressionLessSquare/SquareGame.xml',
-      './test/res/ExpressionLessSquare/Main.xml',
+      () => jackAnalyzer('./test/res/Square'),
+      './test/res/Square/Square.xml',
+      './test/res/Square/SquareGame.xml',
+      './test/res/Square/Main.xml',
     );
   });
 });

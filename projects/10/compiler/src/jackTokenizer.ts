@@ -58,6 +58,7 @@ type JackSymbol = (typeof lexicalElements.SYMBOL)[number];
 export type JackTokenizer = {
   hasMoreTokens: () => boolean;
   advance: () => void;
+  currentToken: () => string;
   tokenType: () => JackTokenType;
   keyword: () => JackKeyword;
   symbol: () => string;
@@ -67,6 +68,10 @@ export type JackTokenizer = {
 };
 
 const isBlank = (line: string): boolean => {
+  if (line === undefined) {
+    console.log('here');
+  }
+
   return line.trim().length === 0;
 };
 
@@ -169,11 +174,11 @@ export const jackTokenizer = (readLine: () => string | null): JackTokenizer => {
       }
 
       if (i === 0) {
-        currentLine = currentToken.substring(1) + currentLine;
+        currentLine = (currentToken.substring(1) + ' ' + currentLine).trim();
         currentToken = currentToken[0];
         return;
       } else {
-        currentLine = currentToken.substring(i) + currentLine;
+        currentLine = (currentToken.substring(i) + ' ' + currentLine).trim();
         currentToken = currentToken.substring(0, i);
       }
     }
@@ -188,6 +193,7 @@ export const jackTokenizer = (readLine: () => string | null): JackTokenizer => {
   return {
     hasMoreTokens: () => moreToken,
     advance: advanceWithCommentHandling,
+    currentToken: () => currentToken,
     tokenType: (): JackTokenType => {
       assertThatCurrentTokenIsExistent();
 

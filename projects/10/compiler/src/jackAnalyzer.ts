@@ -1,7 +1,7 @@
 import { readFilePromise } from './readFilePromise';
 import { readdirPromise } from './readdirPromise';
-import * as readline from 'readline/promises';
-import fs from 'node:fs';
+import { jackTokenizer } from './jackTokenizer';
+import { writeFilePromise } from './writeFilePromise';
 
 export const jackAnalyzer = async (path: string): Promise<void> => {
   const jackExtension = '.jack';
@@ -24,24 +24,37 @@ const handleSingleFile = async (jackFile: string) => {
     throw Error('The path must have a `.jack` extension.');
   }
 
-  // create a stream interface to read line by line from path of jackFile
-
-  const rl = readline.createInterface({
-    input: fs.createReadStream(jackFile),
-    terminal: false,
-  });
-
   const jackCode = await readFilePromise(jackFile);
 
   let currentLineNumber = 0;
   const readLine = () => {
-    const line = jackCode.split('\n')[currentLineNumber];
+    const line = jackCode.replace(/\r/g, '').split('\n')[currentLineNumber];
     currentLineNumber += 1;
+
+    if (line === undefined) {
+      return null;
+    }
+
     return line;
   };
 
-  // const tokenizer = jackTokenizer(readLine);
-  // const xmlFile = jackFile.replace('.jack', '.xml');
-  //
-  // await writeFilePromise(xmlFile, xml);
+  const tokenizer = jackTokenizer(readLine);
+  let xml = '<tokens>\n';
+  for (;;) {
+    tokenizer.advance();
+    if (!tokenizer.hasMoreTokens()) {
+      break;
+    }
+
+    xml = `${xml}<${tokenizer
+      .tokenType()
+      .toLocaleLowerCase()}> ${tokenizer.currentToken()} </${tokenizer
+      .tokenType()
+      .toLocaleLowerCase()}>\n`;
+  }
+
+  xml = `${xml}</tokens>`;
+
+  const xmlFile = jackFile.replace('.jack', '.xml');
+  await writeFilePromise(xmlFile, xml);
 };

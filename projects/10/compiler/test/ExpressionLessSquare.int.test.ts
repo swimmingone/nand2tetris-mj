@@ -6,8 +6,8 @@ import { readFilePromise } from '../src/readFilePromise';
 describe('ExpressionLessSquare', () => {
   it('should compile Main.jack', async () => {
     const jackPath = './test/res/ExpressionLessSquare/Main.jack';
-    const xmlPath = './test/res/ExpressionLessSquare/Main.xml';
-    const expectedXmlPath = './test/res/ExpressionLessSquare/MainT.xml';
+    const xmlPath = './test/res/ExpressionLessSquare/MainT.xml';
+    const expectedXmlPath = './test/compare/ExpressionLessSquare/MainT.xml';
 
     await fileTestTemplate(async () => {
       await jackAnalyzer(jackPath);
@@ -23,8 +23,8 @@ describe('ExpressionLessSquare', () => {
 
   it('should compile Square.jack', async () => {
     const jackPath = './test/res/ExpressionLessSquare/Square.jack';
-    const xmlPath = './test/res/ExpressionLessSquare/Square.xml';
-    const expectedXmlPath = './test/res/ExpressionLessSquare/SquareT.xml';
+    const xmlPath = './test/res/ExpressionLessSquare/SquareT.xml';
+    const expectedXmlPath = './test/compare/ExpressionLessSquare/SquareT.xml';
 
     await fileTestTemplate(async () => {
       await jackAnalyzer(jackPath);
@@ -40,8 +40,8 @@ describe('ExpressionLessSquare', () => {
 
   it('should compile SquareGame.jack', async () => {
     const jackPath = './test/res/ExpressionLessSquare/SquareGame.jack';
-    const xmlPath = './test/res/ExpressionLessSquare/SquareGame.xml';
-    const expectedXmlPath = './test/res/ExpressionLessSquare/SquareGameT.xml';
+    const xmlPath = './test/res/ExpressionLessSquare/SquareGameT.xml';
+    const expectedXmlPath = './test/compare/ExpressionLessSquare/SquareGameT.xml';
 
     await fileTestTemplate(async () => {
       await jackAnalyzer(jackPath);
@@ -58,9 +58,9 @@ describe('ExpressionLessSquare', () => {
   it('should compile a directory', async () => {
     await fileTestTemplate(
       () => jackAnalyzer('./test/res/ExpressionLessSquare'),
-      './test/res/ExpressionLessSquare/Square.xml',
-      './test/res/ExpressionLessSquare/SquareGame.xml',
-      './test/res/ExpressionLessSquare/Main.xml',
+      './test/res/ExpressionLessSquare/SquareT.xml',
+      './test/res/ExpressionLessSquare/SquareGameT.xml',
+      './test/res/ExpressionLessSquare/MainT.xml',
     );
   });
 });

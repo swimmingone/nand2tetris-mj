@@ -55,6 +55,6 @@ const handleSingleFile = async (jackFile: string) => {
 
   xml = `${xml}</tokens>`;
 
-  const xmlFile = jackFile.replace('.jack', '.xml');
-  await writeFilePromise(xmlFile, xml);
+  const tokenizedXmlFile = jackFile.replace('.jack', 'T.xml');
+  await writeFilePromise(tokenizedXmlFile, xml);
 };

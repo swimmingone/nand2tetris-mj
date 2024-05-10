@@ -1,3 +1,5 @@
+import { encodeForXml } from './utils/encodeForXml';
+
 const lexicalElements = {
   KEYWORD: [
     'class',
@@ -51,6 +53,13 @@ const lexicalElements = {
 const symbolSet = new Set(lexicalElements.SYMBOL);
 
 export type JackTokenType = keyof typeof lexicalElements;
+export const JackTokenTypeMap: Record<JackTokenType, string> = {
+  KEYWORD: 'keyword',
+  SYMBOL: 'symbol',
+  IDENTIFIER: 'identifier',
+  INT_CONST: 'integerConstant',
+  STRING_CONST: 'stringConstant',
+};
 export type JackKeyword = (typeof lexicalElements.KEYWORD)[number];
 type JackSymbol = (typeof lexicalElements.SYMBOL)[number];
 
@@ -58,7 +67,6 @@ type JackSymbol = (typeof lexicalElements.SYMBOL)[number];
 export type JackTokenizer = {
   hasMoreTokens: () => boolean;
   advance: () => void;
-  currentToken: () => string;
   tokenType: () => JackTokenType;
   keyword: () => JackKeyword;
   symbol: () => string;
@@ -92,6 +100,7 @@ export const jackTokenizer = (readLine: () => string | null): JackTokenizer => {
   let currentLine = '';
   let moreToken = true;
   let multilineCommentStarted = false;
+  let stringConstStarted = false;
 
   const readLineUntilToken = (): void => {
     const nextLine = readLine();
@@ -144,9 +153,25 @@ export const jackTokenizer = (readLine: () => string | null): JackTokenizer => {
     f();
   };
 
+  const advanceWithStringConstHandling = (): void => {
+    advance();
+
+    if (stringConstStarted) {
+      if (currentToken === '"') {
+        stringConstStarted = false;
+      }
+      advanceWithStringConstHandling();
+    }
+
+    if (currentToken === '"') {
+      stringConstStarted = true;
+      advanceWithStringConstHandling();
+    }
+  };
+
   // 파일에서 코드를 읽을 때 줄 단위가 아니라 문자 단위로 읽어오면 편할듯..
   const advanceWithCommentHandling = (): void => {
-    advance();
+    advanceWithStringConstHandling();
 
     if (multilineCommentStarted) {
       if (isMultilineCommentEnd(currentToken)) {
@@ -182,6 +207,31 @@ export const jackTokenizer = (readLine: () => string | null): JackTokenizer => {
         currentToken = currentToken.substring(0, i);
       }
     }
+
+    // if token starts with ", split it and add the string to new current line
+    if (currentToken.startsWith('"')) {
+      const index = currentToken.indexOf('"', 1);
+      if (index !== -1) {
+        const newCurrentToken = currentToken.substring(0, index + 1);
+        const newCurrentLine = currentToken.substring(index + 1) + ' ' + currentLine;
+
+        currentToken = newCurrentToken;
+        currentLine = newCurrentLine.trim();
+        return;
+      }
+
+      const indexFromCurrentLine = currentLine.indexOf('"');
+      if (indexFromCurrentLine === -1) {
+        throw Error('String constant not closed');
+      }
+      const newCurrentToken =
+        currentToken + ' ' + currentLine.substring(0, indexFromCurrentLine + 1);
+      const newCurrentLine = currentLine.substring(indexFromCurrentLine + 1).trim();
+
+      currentToken = newCurrentToken;
+      currentLine = newCurrentLine;
+      return;
+    }
   };
 
   const assertThatCurrentTokenIsExistent = (): void => {
@@ -193,7 +243,6 @@ export const jackTokenizer = (readLine: () => string | null): JackTokenizer => {
   return {
     hasMoreTokens: () => moreToken,
     advance: advanceWithCommentHandling,
-    currentToken: () => currentToken,
     tokenType: (): JackTokenType => {
       assertThatCurrentTokenIsExistent();
 
@@ -237,7 +286,7 @@ export const jackTokenizer = (readLine: () => string | null): JackTokenizer => {
         throw Error(`Not a symbol: ${currentToken}`);
       }
 
-      return currentToken as JackSymbol;
+      return encodeForXml(currentToken) as JackSymbol;
     },
 
     identifier: (): string => {

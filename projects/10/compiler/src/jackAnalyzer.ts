@@ -1,6 +1,6 @@
 import { readFilePromise } from './readFilePromise';
 import { readdirPromise } from './readdirPromise';
-import { jackTokenizer } from './jackTokenizer';
+import { JackTokenizer, jackTokenizer, JackTokenType, JackTokenTypeMap } from './jackTokenizer';
 import { writeFilePromise } from './writeFilePromise';
 
 export const jackAnalyzer = async (path: string): Promise<void> => {
@@ -46,15 +46,30 @@ const handleSingleFile = async (jackFile: string) => {
       break;
     }
 
-    xml = `${xml}<${tokenizer
-      .tokenType()
-      .toLocaleLowerCase()}> ${tokenizer.currentToken()} </${tokenizer
-      .tokenType()
-      .toLocaleLowerCase()}>\n`;
+    xml = `${xml}<${JackTokenTypeMap[tokenizer.tokenType()]}> ${getCurrentToken(tokenizer)} </${
+      JackTokenTypeMap[tokenizer.tokenType()]
+    }>\n`;
   }
 
   xml = `${xml}</tokens>`;
 
   const tokenizedXmlFile = jackFile.replace('.jack', 'T.xml');
   await writeFilePromise(tokenizedXmlFile, xml);
+};
+
+const getCurrentToken = (tokenizer: JackTokenizer) => {
+  switch (tokenizer.tokenType()) {
+    case 'KEYWORD':
+      return tokenizer.keyword();
+    case 'SYMBOL':
+      return tokenizer.symbol();
+    case 'IDENTIFIER':
+      return tokenizer.identifier();
+    case 'INT_CONST':
+      return tokenizer.intVal();
+    case 'STRING_CONST':
+      return tokenizer.stringVal();
+    default:
+      throw Error('Invalid token type.');
+  }
 };

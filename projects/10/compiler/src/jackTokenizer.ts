@@ -100,7 +100,6 @@ export const jackTokenizer = (readLine: () => string | null): JackTokenizer => {
   let currentLine = '';
   let moreToken = true;
   let multilineCommentStarted = false;
-  let stringConstStarted = false;
 
   const readLineUntilToken = (): void => {
     const nextLine = readLine();

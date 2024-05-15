@@ -153,25 +153,9 @@ export const jackTokenizer = (readLine: () => string | null): JackTokenizer => {
     f();
   };
 
-  const advanceWithStringConstHandling = (): void => {
-    advance();
-
-    if (stringConstStarted) {
-      if (currentToken === '"') {
-        stringConstStarted = false;
-      }
-      advanceWithStringConstHandling();
-    }
-
-    if (currentToken === '"') {
-      stringConstStarted = true;
-      advanceWithStringConstHandling();
-    }
-  };
-
   // 파일에서 코드를 읽을 때 줄 단위가 아니라 문자 단위로 읽어오면 편할듯..
   const advanceWithCommentHandling = (): void => {
-    advanceWithStringConstHandling();
+    advance();
 
     if (multilineCommentStarted) {
       if (isMultilineCommentEnd(currentToken)) {

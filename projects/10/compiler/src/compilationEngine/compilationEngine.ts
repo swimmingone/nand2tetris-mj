@@ -1,4 +1,7 @@
 import { printLineWithIndent } from '../utils/printLineWithIndent';
+import { encodeForXml } from '../utils/encodeForXml';
+
+const operators = ['+', '-', '*', '/', '&', '|', '<', '>', '='];
 
 export type CompilationEngine = {
   compileClass: () => void;
@@ -33,26 +36,18 @@ export const compilationEngine = ({
 }): CompilationEngine => {
   let indentLevel = 0;
 
-  const exactly = (target: string | number) => currentToken() === target;
+  const exactly = (target: string | number) =>
+    (typeof target === 'string' ? encodeForXml(target) : target) === currentToken();
   const isString = (target: string | number) => typeof target === 'string';
-  const isStringStartsWithSmall = (target: string | number) =>
-    typeof target === 'string' && /^[a-z]/.test(target);
   const isStringStartsWithCapital = (target: string | number) => {
     return typeof target === 'string' && /^[A-Z]/.test(target);
   };
+  const isNumber = (target: string | number) => typeof target === 'number';
   const isStaticOrField = (target: string | number) => target === 'static' || target === 'field';
   const isSubroutineKeyword = (target: string | number) =>
     target === 'constructor' || target === 'function' || target === 'method';
   const isOperator = (target: string | number) =>
-    target === '+' ||
-    target === '-' ||
-    target === '*' ||
-    target === '/' ||
-    target === '&' ||
-    target === '|' ||
-    target === '<' ||
-    target === '>' ||
-    target === '=';
+    operators.map((op) => encodeForXml(op)).includes(target as string);
   const isUnaryOperator = (target: string | number) => target === '-' || target === '~';
 
   const compileClass = () => {
@@ -61,7 +56,9 @@ export const compilationEngine = ({
     process('class', exactly, indentLevel);
     process(currentToken(), isStringStartsWithCapital, indentLevel); // className
     process('{', exactly, indentLevel);
-    compileClassVarDec();
+    while (isStaticOrField(currentToken())) {
+      compileClassVarDec();
+    }
     while (isSubroutineKeyword(currentToken())) {
       compileSubroutine();
     }
@@ -75,10 +72,10 @@ export const compilationEngine = ({
     indentLevel += 1;
     process(currentToken(), isStaticOrField, indentLevel); // static | field
     process(currentToken(), isString, indentLevel); // type
-    process(currentToken(), isStringStartsWithSmall, indentLevel); // varName
+    process(currentToken(), isString, indentLevel); // varName
     while (currentToken() === ',') {
       process(',', exactly, indentLevel);
-      process(currentToken(), isStringStartsWithSmall, indentLevel); // varName
+      process(currentToken(), isString, indentLevel); // varName
     }
     process(';', exactly, indentLevel);
     indentLevel -= 1;
@@ -90,7 +87,7 @@ export const compilationEngine = ({
     indentLevel += 1;
     process(currentToken(), isSubroutineKeyword, indentLevel);
     process(currentToken(), isString, indentLevel); // type
-    process(currentToken(), isStringStartsWithSmall, indentLevel); // subroutineName
+    process(currentToken(), isString, indentLevel); // subroutineName
     process('(', exactly, indentLevel);
     compileParameterList();
     process(')', exactly, indentLevel);
@@ -104,11 +101,11 @@ export const compilationEngine = ({
     indentLevel += 1;
     if (currentToken() !== ')') {
       process(currentToken(), isString, indentLevel); // type
-      process(currentToken(), isStringStartsWithSmall, indentLevel); // varName
+      process(currentToken(), isString, indentLevel); // varName
       while (currentToken() === ',') {
         process(',', exactly, indentLevel);
         process(currentToken(), isString, indentLevel); // type
-        process(currentToken(), isStringStartsWithSmall, indentLevel); // varName
+        process(currentToken(), isString, indentLevel); // varName
       }
     }
     indentLevel -= 1;
@@ -119,7 +116,9 @@ export const compilationEngine = ({
     print(printLineWithIndent('<subroutineBody>', indentLevel));
     indentLevel += 1;
     process('{', exactly, indentLevel);
-    compileVarDec();
+    if (currentToken() === 'var') {
+      compileVarDec();
+    }
     compileStatements();
     process('}', exactly, indentLevel);
     indentLevel -= 1;
@@ -131,10 +130,10 @@ export const compilationEngine = ({
     indentLevel += 1;
     process('var', exactly, indentLevel);
     process(currentToken(), isString, indentLevel); // type
-    process(currentToken(), isStringStartsWithSmall, indentLevel); // varName
+    process(currentToken(), isString, indentLevel); // varName
     while (currentToken() === ',') {
       process(',', exactly, indentLevel);
-      process(currentToken(), isStringStartsWithSmall, indentLevel); // varName
+      process(currentToken(), isString, indentLevel); // varName
     }
     process(';', exactly, indentLevel);
     indentLevel -= 1;
@@ -165,7 +164,7 @@ export const compilationEngine = ({
     print(printLineWithIndent('<letStatement>', indentLevel));
     indentLevel += 1;
     process('let', exactly, indentLevel);
-    process(currentToken(), isStringStartsWithSmall, indentLevel); // varName
+    process(currentToken(), isString, indentLevel); // varName
     if (currentToken() === '[') {
       process('[', exactly, indentLevel);
       compileExpression();
@@ -216,14 +215,14 @@ export const compilationEngine = ({
     print(printLineWithIndent('<doStatement>', indentLevel));
     indentLevel += 1;
     process('do', exactly, indentLevel);
-    process(currentToken(), isStringStartsWithSmall, indentLevel); // subroutineName | varName
+    process(currentToken(), isString, indentLevel); // subroutineName | varName
     if (currentToken() === '(') {
       process('(', exactly, indentLevel);
       compileExpressionList();
       process(')', exactly, indentLevel);
     } else if (currentToken() === '.') {
       process('.', exactly, indentLevel);
-      process(currentToken(), isStringStartsWithSmall, indentLevel); // subroutineName
+      process(currentToken(), isString, indentLevel); // subroutineName
       process('(', exactly, indentLevel);
       compileExpressionList();
       process(')', exactly, indentLevel);
@@ -249,10 +248,10 @@ export const compilationEngine = ({
     print(printLineWithIndent('<expression>', indentLevel));
     indentLevel += 1;
     compileTerm();
-    // while (currentToken()) {
-    //   process(currentToken(), isOperator, indentLevel);
-    //   compileTerm();
-    // }
+    while (isOperator(currentToken())) {
+      process(currentToken(), isOperator, indentLevel);
+      compileTerm();
+    }
     indentLevel -= 1;
     print(printLineWithIndent('</expression>', indentLevel));
   };
@@ -264,11 +263,26 @@ export const compilationEngine = ({
       process('(', exactly, indentLevel);
       compileExpression();
       process(')', exactly, indentLevel);
-    } else if (currentToken() === '-' || currentToken() === '~') {
+    } else if (isUnaryOperator(currentToken())) {
       process(currentToken(), isUnaryOperator, indentLevel);
       compileTerm();
     } else {
-      process(currentToken(), isStringStartsWithSmall, indentLevel);
+      process(currentToken(), () => true, indentLevel); // varName | subroutineName | className | keywordConstant
+      if (currentToken() === '[') {
+        process('[', exactly, indentLevel);
+        process(currentToken(), isNumber, indentLevel); // index
+        process(']', exactly, indentLevel);
+      } else if (currentToken() === '(') {
+        process('(', exactly, indentLevel);
+        compileExpressionList();
+        process(')', exactly, indentLevel);
+      } else if (currentToken() === '.') {
+        process('.', exactly, indentLevel);
+        process(currentToken(), isString, indentLevel); // subroutineName
+        process('(', exactly, indentLevel);
+        compileExpressionList();
+        process(')', exactly, indentLevel);
+      }
     }
     indentLevel -= 1;
     print(printLineWithIndent('</term>', indentLevel));

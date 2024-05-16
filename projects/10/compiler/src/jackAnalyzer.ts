@@ -1,6 +1,6 @@
 import { readFilePromise } from './readFilePromise';
 import { readdirPromise } from './readdirPromise';
-import { JackTokenizer, jackTokenizer, JackTokenType, JackTokenTypeMap } from './jackTokenizer';
+import { JackTokenizer, jackTokenizer, JackTokenTypeMap } from './jackTokenizer';
 import { writeFilePromise } from './writeFilePromise';
 import { compilationEngine } from './compilationEngine';
 import { printLineWithIndent } from './utils/printLineWithIndent';

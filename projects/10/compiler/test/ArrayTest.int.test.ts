@@ -6,8 +6,8 @@ import { readFilePromise } from '../src/readFilePromise';
 describe('ArrayTest', () => {
   it('should compile Main.jack', async () => {
     const jackPath = './test/res/ArrayTest/Main.jack';
-    const xmlPath = './test/res/ArrayTest/MainT.xml';
-    const expectedXmlPath = './test/compare/ArrayTest/MainT.xml';
+    const xmlPath = './test/res/ArrayTest/Main.xml';
+    const expectedXmlPath = './test/compare/ArrayTest/Main.xml';
 
     await fileTestTemplate(async () => {
       await jackAnalyzer(jackPath);
@@ -23,7 +23,7 @@ describe('ArrayTest', () => {
   it('should compile a directory', async () => {
     await fileTestTemplate(
       () => jackAnalyzer('./test/res/ArrayTest'),
-      './test/res/ArrayTest/MainT.xml',
+      './test/res/ArrayTest/Main.xml',
     );
   });
 });

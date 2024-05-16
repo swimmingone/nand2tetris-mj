@@ -2,6 +2,8 @@ import { readFilePromise } from './readFilePromise';
 import { readdirPromise } from './readdirPromise';
 import { JackTokenizer, jackTokenizer, JackTokenType, JackTokenTypeMap } from './jackTokenizer';
 import { writeFilePromise } from './writeFilePromise';
+import { compilationEngine } from './compilationEngine';
+import { printLineWithIndent } from './utils/printLineWithIndent';
 
 export const jackAnalyzer = async (path: string): Promise<void> => {
   const jackExtension = '.jack';
@@ -26,6 +28,8 @@ const handleSingleFile = async (jackFile: string) => {
 
   const jackCode = await readFilePromise(jackFile);
 
+  let result = '';
+
   let currentLineNumber = 0;
   const readLine = () => {
     const line = jackCode.replace(/\r/g, '').split('\n')[currentLineNumber];
@@ -39,22 +43,38 @@ const handleSingleFile = async (jackFile: string) => {
   };
 
   const tokenizer = jackTokenizer(readLine);
-  let xml = '<tokens>\n';
-  for (;;) {
-    tokenizer.advance();
-    if (!tokenizer.hasMoreTokens()) {
-      break;
+  tokenizer.advance();
+
+  const currentToken = () => getCurrentToken(tokenizer);
+
+  const print = (target: string) => {
+    result += target;
+  };
+  const process = (
+    target: string | number,
+    test: (target: string | number) => boolean,
+    indentLevel: number,
+  ) => {
+    const currentToken = getCurrentToken(tokenizer);
+
+    console.log({ currentToken, target });
+    if (test(target)) {
+      result += printXmlToken({ target, tokenizer, indentLevel });
+    } else {
+      console.log({ currentToken, target });
+      console.log(test);
+      throw Error('Syntax error.');
     }
 
-    xml = `${xml}<${JackTokenTypeMap[tokenizer.tokenType()]}> ${getCurrentToken(tokenizer)} </${
-      JackTokenTypeMap[tokenizer.tokenType()]
-    }>\n`;
-  }
+    tokenizer.advance();
+  };
 
-  xml = `${xml}</tokens>`;
+  const engine = compilationEngine({ print, process, currentToken });
 
-  const tokenizedXmlFile = jackFile.replace('.jack', 'T.xml');
-  await writeFilePromise(tokenizedXmlFile, xml);
+  engine.compileClass();
+
+  const xmlFilePath = jackFile.replace('.jack', '.xml');
+  await writeFilePromise(xmlFilePath, result);
 };
 
 const getCurrentToken = (tokenizer: JackTokenizer) => {
@@ -72,4 +92,20 @@ const getCurrentToken = (tokenizer: JackTokenizer) => {
     default:
       throw Error('Invalid token type.');
   }
+};
+
+const printXmlToken = ({
+  target,
+  tokenizer,
+  indentLevel,
+}: {
+  target: string | number;
+  tokenizer: JackTokenizer;
+  indentLevel: number;
+}) => {
+  const token = `<${JackTokenTypeMap[tokenizer.tokenType()]}> ${target} </${
+    JackTokenTypeMap[tokenizer.tokenType()]
+  }>`;
+
+  return printLineWithIndent(token, indentLevel);
 };

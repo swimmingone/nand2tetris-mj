@@ -1,4 +1,4 @@
-import { printLineWithIndent } from '../utils/printLineWithIndent';
+import { toLineWithIndent } from '../utils/toLineWithIndent';
 import { encodeForXml } from '../utils/encodeForXml';
 
 const operators = ['+', '-', '*', '/', '&', '|', '<', '>', '='];
@@ -51,7 +51,7 @@ export const compilationEngine = ({
   const isUnaryOperator = (target: string | number) => target === '-' || target === '~';
 
   const compileClass = () => {
-    print(printLineWithIndent('<class>', indentLevel));
+    print(toLineWithIndent('<class>', indentLevel));
     indentLevel += 1;
     process('class', exactly, indentLevel);
     process(currentToken(), isStringStartsWithCapital, indentLevel); // className
@@ -68,7 +68,7 @@ export const compilationEngine = ({
   };
 
   const compileClassVarDec = () => {
-    print(printLineWithIndent('<classVarDec>', indentLevel));
+    print(toLineWithIndent('<classVarDec>', indentLevel));
     indentLevel += 1;
     process(currentToken(), isStaticOrField, indentLevel); // static | field
     process(currentToken(), isString, indentLevel); // type
@@ -79,11 +79,11 @@ export const compilationEngine = ({
     }
     process(';', exactly, indentLevel);
     indentLevel -= 1;
-    print(printLineWithIndent('</classVarDec>', indentLevel));
+    print(toLineWithIndent('</classVarDec>', indentLevel));
   };
 
   const compileSubroutine = () => {
-    print(printLineWithIndent('<subroutineDec>', indentLevel));
+    print(toLineWithIndent('<subroutineDec>', indentLevel));
     indentLevel += 1;
     process(currentToken(), isSubroutineKeyword, indentLevel);
     process(currentToken(), isString, indentLevel); // type
@@ -93,11 +93,11 @@ export const compilationEngine = ({
     process(')', exactly, indentLevel);
     compileSubroutineBody();
     indentLevel -= 1;
-    print(printLineWithIndent('</subroutineDec>', indentLevel));
+    print(toLineWithIndent('</subroutineDec>', indentLevel));
   };
 
   const compileParameterList = () => {
-    print(printLineWithIndent('<parameterList>', indentLevel));
+    print(toLineWithIndent('<parameterList>', indentLevel));
     indentLevel += 1;
     if (currentToken() !== ')') {
       process(currentToken(), isString, indentLevel); // type
@@ -109,24 +109,24 @@ export const compilationEngine = ({
       }
     }
     indentLevel -= 1;
-    print(printLineWithIndent('</parameterList>', indentLevel));
+    print(toLineWithIndent('</parameterList>', indentLevel));
   };
 
   const compileSubroutineBody = () => {
-    print(printLineWithIndent('<subroutineBody>', indentLevel));
+    print(toLineWithIndent('<subroutineBody>', indentLevel));
     indentLevel += 1;
     process('{', exactly, indentLevel);
-    if (currentToken() === 'var') {
+    while (currentToken() === 'var') {
       compileVarDec();
     }
     compileStatements();
     process('}', exactly, indentLevel);
     indentLevel -= 1;
-    print(printLineWithIndent('</subroutineBody>', indentLevel));
+    print(toLineWithIndent('</subroutineBody>', indentLevel));
   };
 
   const compileVarDec = () => {
-    print(printLineWithIndent('<varDec>', indentLevel));
+    print(toLineWithIndent('<varDec>', indentLevel));
     indentLevel += 1;
     process('var', exactly, indentLevel);
     process(currentToken(), isString, indentLevel); // type
@@ -137,11 +137,11 @@ export const compilationEngine = ({
     }
     process(';', exactly, indentLevel);
     indentLevel -= 1;
-    print(printLineWithIndent('</varDec>', indentLevel));
+    print(toLineWithIndent('</varDec>', indentLevel));
   };
 
   const compileStatements = () => {
-    print(printLineWithIndent('<statements>', indentLevel));
+    print(toLineWithIndent('<statements>', indentLevel));
     indentLevel += 1;
     while (currentToken() !== '}') {
       if (currentToken() === 'let') {
@@ -157,11 +157,11 @@ export const compilationEngine = ({
       }
     }
     indentLevel -= 1;
-    print(printLineWithIndent('</statements>', indentLevel));
+    print(toLineWithIndent('</statements>', indentLevel));
   };
 
   const compileLet = () => {
-    print(printLineWithIndent('<letStatement>', indentLevel));
+    print(toLineWithIndent('<letStatement>', indentLevel));
     indentLevel += 1;
     process('let', exactly, indentLevel);
     process(currentToken(), isString, indentLevel); // varName
@@ -174,11 +174,11 @@ export const compilationEngine = ({
     compileExpression();
     process(';', exactly, indentLevel);
     indentLevel -= 1;
-    print(printLineWithIndent('</letStatement>', indentLevel));
+    print(toLineWithIndent('</letStatement>', indentLevel));
   };
 
   const compileIf = () => {
-    print(printLineWithIndent('<ifStatement>', indentLevel));
+    print(toLineWithIndent('<ifStatement>', indentLevel));
     indentLevel += 1;
     process('if', exactly, indentLevel);
     process('(', exactly, indentLevel);
@@ -194,11 +194,11 @@ export const compilationEngine = ({
       process('}', exactly, indentLevel);
     }
     indentLevel -= 1;
-    print(printLineWithIndent('</ifStatement>', indentLevel));
+    print(toLineWithIndent('</ifStatement>', indentLevel));
   };
 
   const compileWhile = () => {
-    print(printLineWithIndent('<whileStatement>', indentLevel));
+    print(toLineWithIndent('<whileStatement>', indentLevel));
     indentLevel += 1;
     process('while', exactly, indentLevel);
     process('(', exactly, indentLevel);
@@ -208,11 +208,11 @@ export const compilationEngine = ({
     compileStatements();
     process('}', exactly, indentLevel);
     indentLevel -= 1;
-    print(printLineWithIndent('</whileStatement>', indentLevel));
+    print(toLineWithIndent('</whileStatement>', indentLevel));
   };
 
   const compileDo = () => {
-    print(printLineWithIndent('<doStatement>', indentLevel));
+    print(toLineWithIndent('<doStatement>', indentLevel));
     indentLevel += 1;
     process('do', exactly, indentLevel);
     process(currentToken(), isString, indentLevel); // subroutineName | varName
@@ -229,11 +229,11 @@ export const compilationEngine = ({
     }
     process(';', exactly, indentLevel);
     indentLevel -= 1;
-    print(printLineWithIndent('</doStatement>', indentLevel));
+    print(toLineWithIndent('</doStatement>', indentLevel));
   };
 
   const compileReturn = () => {
-    print(printLineWithIndent('<returnStatement>', indentLevel));
+    print(toLineWithIndent('<returnStatement>', indentLevel));
     indentLevel += 1;
     process('return', exactly, indentLevel);
     if (currentToken() !== ';') {
@@ -241,11 +241,11 @@ export const compilationEngine = ({
     }
     process(';', exactly, indentLevel);
     indentLevel -= 1;
-    print(printLineWithIndent('</returnStatement>', indentLevel));
+    print(toLineWithIndent('</returnStatement>', indentLevel));
   };
 
   const compileExpression = () => {
-    print(printLineWithIndent('<expression>', indentLevel));
+    print(toLineWithIndent('<expression>', indentLevel));
     indentLevel += 1;
     compileTerm();
     while (isOperator(currentToken())) {
@@ -253,11 +253,11 @@ export const compilationEngine = ({
       compileTerm();
     }
     indentLevel -= 1;
-    print(printLineWithIndent('</expression>', indentLevel));
+    print(toLineWithIndent('</expression>', indentLevel));
   };
 
   const compileTerm = () => {
-    print(printLineWithIndent('<term>', indentLevel));
+    print(toLineWithIndent('<term>', indentLevel));
     indentLevel += 1;
     if (currentToken() === '(') {
       process('(', exactly, indentLevel);
@@ -270,7 +270,7 @@ export const compilationEngine = ({
       process(currentToken(), () => true, indentLevel); // varName | subroutineName | className | keywordConstant
       if (currentToken() === '[') {
         process('[', exactly, indentLevel);
-        process(currentToken(), isNumber, indentLevel); // index
+        compileExpression();
         process(']', exactly, indentLevel);
       } else if (currentToken() === '(') {
         process('(', exactly, indentLevel);
@@ -285,11 +285,11 @@ export const compilationEngine = ({
       }
     }
     indentLevel -= 1;
-    print(printLineWithIndent('</term>', indentLevel));
+    print(toLineWithIndent('</term>', indentLevel));
   };
 
   const compileExpressionList = () => {
-    print(printLineWithIndent('<expressionList>', indentLevel));
+    print(toLineWithIndent('<expressionList>', indentLevel));
     indentLevel += 1;
     if (currentToken() !== ')') {
       compileExpression();
@@ -299,7 +299,7 @@ export const compilationEngine = ({
       }
     }
     indentLevel -= 1;
-    print(printLineWithIndent('</expressionList>', indentLevel));
+    print(toLineWithIndent('</expressionList>', indentLevel));
   };
 
   return {

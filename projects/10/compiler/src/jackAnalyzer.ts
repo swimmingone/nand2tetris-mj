@@ -3,7 +3,7 @@ import { readdirPromise } from './readdirPromise';
 import { JackTokenizer, jackTokenizer, JackTokenTypeMap } from './jackTokenizer';
 import { writeFilePromise } from './writeFilePromise';
 import { compilationEngine } from './compilationEngine';
-import { printLineWithIndent } from './utils/printLineWithIndent';
+import { toLineWithIndent } from './utils/toLineWithIndent';
 
 export const jackAnalyzer = async (path: string): Promise<void> => {
   const jackExtension = '.jack';
@@ -107,5 +107,5 @@ const printXmlToken = ({
     JackTokenTypeMap[tokenizer.tokenType()]
   }>`;
 
-  return printLineWithIndent(token, indentLevel);
+  return toLineWithIndent(token, indentLevel);
 };

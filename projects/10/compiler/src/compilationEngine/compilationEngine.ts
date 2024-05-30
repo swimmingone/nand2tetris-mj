@@ -1,5 +1,6 @@
 import { toLineWithIndent } from '../utils/toLineWithIndent';
 import { encodeForXml } from '../utils/encodeForXml';
+import { Kind, SymbolTable } from '../symbolTable';
 
 const operators = ['+', '-', '*', '/', '&', '|', '<', '>', '='];
 
@@ -25,6 +26,8 @@ export const compilationEngine = ({
   print,
   process,
   currentToken,
+  classSymbolTable,
+  subroutineSymbolTable,
 }: {
   print: (target: string) => void;
   process: (
@@ -33,6 +36,8 @@ export const compilationEngine = ({
     indentLevel: number,
   ) => void;
   currentToken: () => string | number;
+  classSymbolTable: SymbolTable;
+  subroutineSymbolTable: SymbolTable;
 }): CompilationEngine => {
   let indentLevel = 0;
 
@@ -54,7 +59,10 @@ export const compilationEngine = ({
     print(toLineWithIndent('<class>', indentLevel));
     indentLevel += 1;
     process('class', exactly, indentLevel);
-    process(currentToken(), isStringStartsWithCapital, indentLevel); // className
+
+    const extendedClassName = `name: ${currentToken()}, category: class, index: none, usage: declared`;
+    process(extendedClassName, isStringStartsWithCapital, indentLevel); // className
+
     process('{', exactly, indentLevel);
     while (isStaticOrField(currentToken())) {
       compileClassVarDec();
@@ -70,12 +78,27 @@ export const compilationEngine = ({
   const compileClassVarDec = () => {
     print(toLineWithIndent('<classVarDec>', indentLevel));
     indentLevel += 1;
-    process(currentToken(), isStaticOrField, indentLevel); // static | field
-    process(currentToken(), isString, indentLevel); // type
-    process(currentToken(), isString, indentLevel); // varName
+    const category = currentToken(); // static | field
+    process(category, isStaticOrField, indentLevel);
+    const type = currentToken(); // type
+    process(type, isString, indentLevel);
+
+    const name = currentToken().toString();
+    classSymbolTable.define(name, type.toString(), category as Kind);
+    const extendedVarName = `name: ${name}, category: ${category}, index: ${classSymbolTable.indexOf(
+      name,
+    )}, usage: declared`;
+    process(extendedVarName, isString, indentLevel); // varName
+
     while (currentToken() === ',') {
       process(',', exactly, indentLevel);
-      process(currentToken(), isString, indentLevel); // varName
+
+      const name = currentToken().toString();
+      classSymbolTable.define(name, type.toString(), category as Kind);
+      const extendedVarName = `name: ${name}, category: ${category}, index: ${classSymbolTable.indexOf(
+        name,
+      )}, usage: declared`;
+      process(extendedVarName, isString, indentLevel); // varName
     }
     process(';', exactly, indentLevel);
     indentLevel -= 1;
@@ -83,11 +106,15 @@ export const compilationEngine = ({
   };
 
   const compileSubroutine = () => {
+    subroutineSymbolTable.reset();
     print(toLineWithIndent('<subroutineDec>', indentLevel));
     indentLevel += 1;
     process(currentToken(), isSubroutineKeyword, indentLevel);
     process(currentToken(), isString, indentLevel); // type
-    process(currentToken(), isString, indentLevel); // subroutineName
+
+    const extendedSubroutineName = `name: ${currentToken()}, category: subroutine, index: none, usage: declared`;
+    process(extendedSubroutineName, isString, indentLevel); // subroutineName
+
     process('(', exactly, indentLevel);
     compileParameterList();
     process(')', exactly, indentLevel);
@@ -100,12 +127,24 @@ export const compilationEngine = ({
     print(toLineWithIndent('<parameterList>', indentLevel));
     indentLevel += 1;
     if (currentToken() !== ')') {
-      process(currentToken(), isString, indentLevel); // type
-      process(currentToken(), isString, indentLevel); // varName
+      const type = currentToken(); // type
+      process(type, isString, indentLevel);
+      const name = currentToken().toString();
+      subroutineSymbolTable.define(name, type.toString(), 'arg');
+      const extendedVarName = `name: ${name}, category: arg, index: ${subroutineSymbolTable.indexOf(
+        name,
+      )}, usage: declared`;
+      process(extendedVarName, isString, indentLevel); // varName
       while (currentToken() === ',') {
         process(',', exactly, indentLevel);
-        process(currentToken(), isString, indentLevel); // type
-        process(currentToken(), isString, indentLevel); // varName
+        const type = currentToken(); // type
+        process(type, isString, indentLevel);
+        const name = currentToken().toString();
+        subroutineSymbolTable.define(name, type.toString(), 'arg');
+        const extendedVarName = `name: ${name}, category: arg, index: ${subroutineSymbolTable.indexOf(
+          name,
+        )}, usage: declared`;
+        process(extendedVarName, isString, indentLevel); // varName
       }
     }
     indentLevel -= 1;
@@ -129,11 +168,23 @@ export const compilationEngine = ({
     print(toLineWithIndent('<varDec>', indentLevel));
     indentLevel += 1;
     process('var', exactly, indentLevel);
-    process(currentToken(), isString, indentLevel); // type
-    process(currentToken(), isString, indentLevel); // varName
+    const type = currentToken(); // type
+    process(type, isString, indentLevel);
+    const name = currentToken().toString();
+    subroutineSymbolTable.define(name, type.toString(), 'var');
+    const extendedVarName = `name: ${name}, category: var, index: ${subroutineSymbolTable.indexOf(
+      name,
+    )}, usage: declared`;
+    process(extendedVarName, isString, indentLevel); // varName
+
     while (currentToken() === ',') {
       process(',', exactly, indentLevel);
-      process(currentToken(), isString, indentLevel); // varName
+      const name = currentToken().toString();
+      subroutineSymbolTable.define(name, type.toString(), 'var');
+      const extendedVarName = `name: ${name}, category: var, index: ${subroutineSymbolTable.indexOf(
+        name,
+      )}, usage: declared`;
+      process(extendedVarName, isString, indentLevel); // varName
     }
     process(';', exactly, indentLevel);
     indentLevel -= 1;
@@ -164,7 +215,11 @@ export const compilationEngine = ({
     print(toLineWithIndent('<letStatement>', indentLevel));
     indentLevel += 1;
     process('let', exactly, indentLevel);
-    process(currentToken(), isString, indentLevel); // varName
+    const name = currentToken().toString();
+    const extendedVarName = `name: ${name}, category: ${subroutineSymbolTable.kindOf(
+      name,
+    )}, index: ${subroutineSymbolTable.indexOf(name)}, usage: used`;
+    process(extendedVarName, isString, indentLevel); // varName
     if (currentToken() === '[') {
       process('[', exactly, indentLevel);
       compileExpression();
@@ -215,14 +270,20 @@ export const compilationEngine = ({
     print(toLineWithIndent('<doStatement>', indentLevel));
     indentLevel += 1;
     process('do', exactly, indentLevel);
-    process(currentToken(), isString, indentLevel); // subroutineName | varName
+    const name = currentToken().toString(); // subroutineName | className | varName
+    const extendedName = `name: ${name}, category: class, index: ${subroutineSymbolTable.indexOf(
+      name,
+    )}, usage: used`;
+    process(extendedName, isString, indentLevel);
     if (currentToken() === '(') {
       process('(', exactly, indentLevel);
       compileExpressionList();
       process(')', exactly, indentLevel);
     } else if (currentToken() === '.') {
       process('.', exactly, indentLevel);
-      process(currentToken(), isString, indentLevel); // subroutineName
+      const name = currentToken().toString(); // subroutineName
+      const extendedSubroutineName = `name: ${name}, category: subroutine, index: none, usage: used`;
+      process(extendedSubroutineName, isString, indentLevel);
       process('(', exactly, indentLevel);
       compileExpressionList();
       process(')', exactly, indentLevel);

@@ -1,10 +1,19 @@
 import { toLineWithIndent } from '../utils/toLineWithIndent';
 import { encodeForXml } from '../utils/encodeForXml';
 import { Kind, SymbolTable } from '../symbolTable';
-import { VMWriter } from '../vmWriter';
+import { Command, VMWriter } from '../vmWriter';
 import { JackTokenizer, JackTokenType } from '../jackTokenizer';
 
 const operators = ['+', '-', '*', '/', '&', '|', '<', '>', '='];
+const OperatorCommandMap: Record<string, Command> = {
+  '+': 'ADD',
+  '-': 'SUB',
+  '&': 'AND',
+  '|': 'OR',
+  '<': 'LT',
+  '>': 'GT',
+  '=': 'EQ',
+} as const;
 
 export type CompilationEngine = {
   compileClass: () => void;
@@ -282,28 +291,36 @@ export const compilationEngine = ({
   };
 
   const compileDo = () => {
+    let argCount = 0;
+    let subroutineName = '';
+
     print(toLineWithIndent('<doStatement>', indentLevel));
     indentLevel += 1;
     process('do', exactly, indentLevel);
     const name = currentToken().toString(); // subroutineName | className | varName
+    subroutineName = name;
     const extendedName = `name: ${name}, category: class, index: ${subroutineSymbolTable.indexOf(
       name,
     )}, usage: used`;
     process(extendedName, isString, indentLevel);
     if (currentToken() === '(') {
       process('(', exactly, indentLevel);
-      compileExpressionList();
+      argCount = compileExpressionList();
       process(')', exactly, indentLevel);
     } else if (currentToken() === '.') {
       process('.', exactly, indentLevel);
       const name = currentToken().toString(); // subroutineName
+      subroutineName += `.${name}`;
       const extendedSubroutineName = `name: ${name}, category: subroutine, index: none, usage: used`;
       process(extendedSubroutineName, isString, indentLevel);
       process('(', exactly, indentLevel);
-      compileExpressionList();
+      argCount = compileExpressionList();
       process(')', exactly, indentLevel);
     }
     process(';', exactly, indentLevel);
+
+    codeGenerator.writeCall(subroutineName, argCount);
+    codeGenerator.writePop('TEMP', 0);
     indentLevel -= 1;
     print(toLineWithIndent('</doStatement>', indentLevel));
   };
@@ -316,6 +333,8 @@ export const compilationEngine = ({
       compileExpression();
     }
     process(';', exactly, indentLevel);
+    codeGenerator.writePush('CONST', 0);
+    codeGenerator.writeReturn();
     indentLevel -= 1;
     print(toLineWithIndent('</returnStatement>', indentLevel));
   };
@@ -328,6 +347,13 @@ export const compilationEngine = ({
       const operator = currentToken();
       process(operator, isOperator, indentLevel);
       compileTerm();
+      if (operator === '*') {
+        codeGenerator.writeCall('Math.multiply', 2);
+      } else if (operator === '/') {
+        codeGenerator.writeCall('Math.divide', 2);
+      } else {
+        codeGenerator.writeArithmetic(OperatorCommandMap[operator as string]);
+      }
     }
     indentLevel -= 1;
     print(toLineWithIndent('</expression>', indentLevel));

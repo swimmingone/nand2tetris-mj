@@ -1,10 +1,10 @@
-type Kind = 'STATIC' | 'FIELD' | 'ARG' | 'VAR';
+export type Kind = 'static' | 'field' | 'arg' | 'var';
 
 export type SymbolTable = {
   reset: () => void;
   define: (name: string, type: string, kind: Kind) => void;
   varCount: (kind: Kind) => number;
-  kindOf: (name: string) => Kind | 'NONE';
+  kindOf: (name: string) => Kind | 'none';
   typeOf: (name: string) => string;
   indexOf: (name: string) => number;
 };
@@ -27,19 +27,19 @@ export const symbolTable = (): SymbolTable => {
 
   const define = (name: string, type: string, kind: Kind) => {
     switch (kind) {
-      case 'STATIC':
+      case 'static':
         table[name] = { type, kind, index: staticIndex };
         staticIndex += 1;
         break;
-      case 'FIELD':
+      case 'field':
         table[name] = { type, kind, index: fieldIndex };
         fieldIndex += 1;
         break;
-      case 'ARG':
+      case 'arg':
         table[name] = { type, kind, index: argIndex };
         argIndex += 1;
         break;
-      case 'VAR':
+      case 'var':
         table[name] = { type, kind, index: varIndex };
         varIndex += 1;
         break;
@@ -48,13 +48,13 @@ export const symbolTable = (): SymbolTable => {
 
   const varCount = (kind: Kind) => {
     switch (kind) {
-      case 'STATIC':
+      case 'static':
         return staticIndex;
-      case 'FIELD':
+      case 'field':
         return fieldIndex;
-      case 'ARG':
+      case 'arg':
         return argIndex;
-      case 'VAR':
+      case 'var':
         return varIndex;
     }
   };
@@ -62,7 +62,7 @@ export const symbolTable = (): SymbolTable => {
   const kindOf = (name: string) => {
     const entry = table[name];
     if (!entry) {
-      return 'NONE';
+      return 'none';
     }
 
     return entry.kind;

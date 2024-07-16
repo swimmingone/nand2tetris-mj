@@ -32,6 +32,7 @@ const handleSingleFile = async (jackFile: string) => {
 
   let xmlResult = '';
   let vmResult = '';
+  const vmResultArray = [];
 
   let currentLineNumber = 0;
   const readLine = () => {
@@ -64,7 +65,6 @@ const handleSingleFile = async (jackFile: string) => {
     exceptionOptions?: { withoutAdvance?: boolean; givenType?: JackTokenType },
   ): void => {
     const tokenType = tokenizer.tokenType();
-    console.log(target, getCurrentToken(tokenizer), test(target));
     if (test(target) || tokenType === 'IDENTIFIER') {
       xmlResult += printXmlToken({
         target,
@@ -73,7 +73,6 @@ const handleSingleFile = async (jackFile: string) => {
         givenType: exceptionOptions?.givenType,
       });
     } else {
-      console.log(target, getCurrentToken(tokenizer), test(target));
       throw Error('Syntax error.');
     }
 
@@ -83,6 +82,7 @@ const handleSingleFile = async (jackFile: string) => {
   };
   const printVm = (target: string) => {
     vmResult += target;
+    vmResultArray.push(target);
   };
 
   const jackFileNoPath = jackFile.split('/').pop();

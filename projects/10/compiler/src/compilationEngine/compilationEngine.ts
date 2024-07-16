@@ -8,10 +8,10 @@ const operators = ['+', '-', '*', '/', '&', '|', '<', '>', '='];
 const OperatorCommandMap: Record<string, Command> = {
   '+': 'ADD',
   '-': 'SUB',
-  '&': 'AND',
+  '&amp;': 'AND',
   '|': 'OR',
-  '<': 'LT',
-  '>': 'GT',
+  '&lt;': 'LT',
+  '&gt;': 'GT',
   '=': 'EQ',
 } as const;
 
@@ -20,7 +20,7 @@ export type CompilationEngine = {
   compileClassVarDec: () => void;
   compileSubroutine: () => void;
   compileParameterList: () => void;
-  compileSubroutineBody: () => void;
+  compileSubroutineBody: (name: string) => void;
   compileVarDec: () => void;
   compileStatements: () => void;
   compileLet: () => void;
@@ -56,6 +56,8 @@ export const compilationEngine = ({
   codeGenerator: VMWriter;
 }): CompilationEngine => {
   let indentLevel = 0;
+  let ifStatementCount = -1;
+  let whileStatementCount = -1;
 
   const exactly = (target: string | number) =>
     (typeof target === 'string' ? encodeForXml(target) : target) === currentToken();
@@ -123,6 +125,8 @@ export const compilationEngine = ({
 
   const compileSubroutine = () => {
     subroutineSymbolTable.reset();
+    ifStatementCount = -1;
+    whileStatementCount = -1;
     print(toLineWithIndent('<subroutineDec>', indentLevel));
     indentLevel += 1;
     process(currentToken(), isSubroutineKeyword, indentLevel);
@@ -131,12 +135,12 @@ export const compilationEngine = ({
     const name = currentToken().toString(); // subroutineName
     const extendedSubroutineName = `name: ${name}, category: subroutine, index: none, usage: declared`;
     process(extendedSubroutineName, isString, indentLevel);
-    codeGenerator.writeFunction(name, subroutineSymbolTable.varCount('var'));
 
     process('(', exactly, indentLevel);
     compileParameterList();
     process(')', exactly, indentLevel);
-    compileSubroutineBody();
+    compileSubroutineBody(name);
+
     indentLevel -= 1;
     print(toLineWithIndent('</subroutineDec>', indentLevel));
   };
@@ -169,13 +173,15 @@ export const compilationEngine = ({
     print(toLineWithIndent('</parameterList>', indentLevel));
   };
 
-  const compileSubroutineBody = () => {
+  const compileSubroutineBody = (subroutineName: string) => {
     print(toLineWithIndent('<subroutineBody>', indentLevel));
     indentLevel += 1;
     process('{', exactly, indentLevel);
     while (currentToken() === 'var') {
       compileVarDec();
     }
+
+    codeGenerator.writeFunction(subroutineName, subroutineSymbolTable.varCount('var'));
     compileStatements();
     process('}', exactly, indentLevel);
     indentLevel -= 1;
@@ -222,8 +228,10 @@ export const compilationEngine = ({
       if (currentToken() === 'let') {
         compileLet();
       } else if (currentToken() === 'if') {
+        ifStatementCount += 1;
         compileIf();
       } else if (currentToken() === 'while') {
+        whileStatementCount += 1;
         compileWhile();
       } else if (currentToken() === 'do') {
         compileDo();
@@ -252,40 +260,58 @@ export const compilationEngine = ({
     process('=', exactly, indentLevel);
     compileExpression();
     process(';', exactly, indentLevel);
+    codeGenerator.writePop(
+      subroutineSymbolTable.kindOf(name) === 'var' ? 'LOCAL' : 'ARGUMENT',
+      subroutineSymbolTable.indexOf(name),
+    );
+
     indentLevel -= 1;
     print(toLineWithIndent('</letStatement>', indentLevel));
   };
 
   const compileIf = () => {
+    const localIfStatementCount = ifStatementCount;
     print(toLineWithIndent('<ifStatement>', indentLevel));
     indentLevel += 1;
     process('if', exactly, indentLevel);
     process('(', exactly, indentLevel);
     compileExpression();
+    codeGenerator.writeIf(`IF_TRUE${localIfStatementCount}`);
+    codeGenerator.writeGoto(`IF_FALSE${localIfStatementCount}`);
     process(')', exactly, indentLevel);
     process('{', exactly, indentLevel);
+    codeGenerator.writeLabel(`IF_TRUE${localIfStatementCount}`);
     compileStatements();
     process('}', exactly, indentLevel);
     if (currentToken() === 'else') {
       process('else', exactly, indentLevel);
       process('{', exactly, indentLevel);
+      codeGenerator.writeGoto(`IF_END${localIfStatementCount}`);
+      codeGenerator.writeLabel(`IF_FALSE${localIfStatementCount}`);
       compileStatements();
       process('}', exactly, indentLevel);
     }
+    codeGenerator.writeLabel(`IF_END${localIfStatementCount}`);
     indentLevel -= 1;
     print(toLineWithIndent('</ifStatement>', indentLevel));
   };
 
   const compileWhile = () => {
+    const localWhileStatementCount = whileStatementCount;
     print(toLineWithIndent('<whileStatement>', indentLevel));
     indentLevel += 1;
     process('while', exactly, indentLevel);
     process('(', exactly, indentLevel);
+    codeGenerator.writeLabel(`WHILE_EXP${localWhileStatementCount}`);
     compileExpression();
+    codeGenerator.writeArithmetic('NOT');
+    codeGenerator.writeIf(`WHILE_END${localWhileStatementCount}`);
     process(')', exactly, indentLevel);
     process('{', exactly, indentLevel);
     compileStatements();
+    codeGenerator.writeGoto(`WHILE_EXP${localWhileStatementCount}`);
     process('}', exactly, indentLevel);
+    codeGenerator.writeLabel(`WHILE_END${localWhileStatementCount}`);
     indentLevel -= 1;
     print(toLineWithIndent('</whileStatement>', indentLevel));
   };
@@ -331,9 +357,10 @@ export const compilationEngine = ({
     process('return', exactly, indentLevel);
     if (currentToken() !== ';') {
       compileExpression();
+    } else {
+      codeGenerator.writePush('CONST', 0);
     }
     process(';', exactly, indentLevel);
-    codeGenerator.writePush('CONST', 0);
     codeGenerator.writeReturn();
     indentLevel -= 1;
     print(toLineWithIndent('</returnStatement>', indentLevel));
@@ -385,12 +412,16 @@ export const compilationEngine = ({
       compileExpression();
       process(')', exactly, indentLevel);
     } else if (isUnaryOperator(currentToken())) {
-      process(currentToken(), isUnaryOperator, indentLevel);
+      const unaryOperator = currentToken();
+      process(unaryOperator, isUnaryOperator, indentLevel);
       compileTerm();
+      codeGenerator.writeArithmetic(unaryOperator === '-' ? 'NEG' : 'NOT');
     } else {
       const savedToken = currentToken();
       const savedTokenType = tokenizer.tokenType();
       if (savedTokenType === 'IDENTIFIER') {
+        let functionName = '';
+        let argCount = 0;
         tokenizer.advance();
         const nextToken = currentToken();
         if (nextToken === '[') {
@@ -398,6 +429,8 @@ export const compilationEngine = ({
           const extendedVarName = `name: ${varName}, category: ${subroutineSymbolTable.kindOf(
             varName,
           )}, index: ${subroutineSymbolTable.indexOf(varName)}, usage: used`;
+          codeGenerator.writePop('LOCAL', subroutineSymbolTable.indexOf(varName));
+          codeGenerator.writePush('LOCAL', subroutineSymbolTable.indexOf(varName));
           process(extendedVarName, () => true, indentLevel, {
             withoutAdvance: true,
             givenType: savedTokenType,
@@ -407,13 +440,14 @@ export const compilationEngine = ({
           process(']', exactly, indentLevel);
         } else if (nextToken === '(') {
           const subroutineName = savedToken.toString();
+          functionName = subroutineName;
           const extendedSubroutineName = `name: ${subroutineName}, category: subroutine, index: none, usage: used`;
           process(extendedSubroutineName, () => true, indentLevel, {
             withoutAdvance: true,
             givenType: savedTokenType,
           });
           process('(', exactly, indentLevel);
-          compileExpressionList();
+          argCount = compileExpressionList();
           process(')', exactly, indentLevel);
         } else if (nextToken === '.') {
           const className = savedToken.toString();
@@ -424,10 +458,11 @@ export const compilationEngine = ({
           });
           process('.', exactly, indentLevel);
           const subroutineName = currentToken();
+          functionName = `${className}.${subroutineName}`;
           const extendedSubroutineName = `name: ${subroutineName}, category: subroutine, index: none, usage: used`;
           process(extendedSubroutineName, isString, indentLevel);
           process('(', exactly, indentLevel);
-          compileExpressionList();
+          argCount = compileExpressionList();
           process(')', exactly, indentLevel);
         } else {
           const varName = savedToken.toString();
@@ -438,7 +473,13 @@ export const compilationEngine = ({
             withoutAdvance: true,
             givenType: savedTokenType,
           });
-          // codeGenerator.writePush('CONST', varName as number);
+          codeGenerator.writePush(
+            subroutineSymbolTable.kindOf(varName) === 'var' ? 'LOCAL' : 'ARGUMENT',
+            subroutineSymbolTable.indexOf(varName),
+          );
+        }
+        if (functionName.length !== 0) {
+          codeGenerator.writeCall(functionName, argCount);
         }
       } else if (savedTokenType === 'INT_CONST') {
         process(savedToken, isNumber, indentLevel);

@@ -9,6 +9,15 @@ export type SymbolTable = {
   indexOf: (name: string) => number;
 };
 
+export const EMPTY_SYMBOL_TABLE: SymbolTable = {
+  reset: () => {},
+  define: () => {},
+  varCount: () => 0,
+  kindOf: () => 'none',
+  typeOf: () => '',
+  indexOf: () => 0,
+};
+
 export const symbolTable = (): SymbolTable => {
   let staticIndex = 0;
   let fieldIndex = 0;

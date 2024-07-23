@@ -52,9 +52,6 @@ const handleSingleFile = async (jackFile: string) => {
   const currentToken = () => getCurrentToken(tokenizer);
   const nextToken = () => getNextToken(tokenizer);
 
-  const classSymbolTable = symbolTable();
-  const subroutineSymbolTable = symbolTable();
-
   const printXml = (target: string) => {
     xmlResult += target;
   };
@@ -97,8 +94,6 @@ const handleSingleFile = async (jackFile: string) => {
     process,
     currentToken,
     tokenizer,
-    classSymbolTable,
-    subroutineSymbolTable,
     codeGenerator,
   });
 

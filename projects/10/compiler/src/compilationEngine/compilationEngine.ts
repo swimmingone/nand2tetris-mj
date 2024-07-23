@@ -1,6 +1,6 @@
 import { toLineWithIndent } from '../utils/toLineWithIndent';
 import { encodeForXml } from '../utils/encodeForXml';
-import { Kind, SymbolTable } from '../symbolTable';
+import { EMPTY_SYMBOL_TABLE, Kind, symbolTable, SymbolTable } from '../symbolTable';
 import { Command, VMWriter } from '../vmWriter';
 import { JackTokenizer, JackTokenType } from '../jackTokenizer';
 
@@ -20,7 +20,7 @@ export type CompilationEngine = {
   compileClassVarDec: () => void;
   compileSubroutine: () => void;
   compileParameterList: () => void;
-  compileSubroutineBody: (name: string) => void;
+  compileSubroutineBody: (name: string, keyword: string) => void;
   compileVarDec: () => void;
   compileStatements: () => void;
   compileLet: () => void;
@@ -38,8 +38,6 @@ export const compilationEngine = ({
   process,
   currentToken,
   tokenizer,
-  classSymbolTable,
-  subroutineSymbolTable,
   codeGenerator,
 }: {
   print: (target: string) => void;
@@ -51,13 +49,14 @@ export const compilationEngine = ({
   ) => void;
   currentToken: () => string | number;
   tokenizer: JackTokenizer;
-  classSymbolTable: SymbolTable;
-  subroutineSymbolTable: SymbolTable;
   codeGenerator: VMWriter;
 }): CompilationEngine => {
   let indentLevel = 0;
   let ifStatementCount = -1;
   let whileStatementCount = -1;
+  let className = '';
+  let classSymbolTable = EMPTY_SYMBOL_TABLE;
+  let subroutineSymbolTable = EMPTY_SYMBOL_TABLE;
 
   const exactly = (target: string | number) =>
     (typeof target === 'string' ? encodeForXml(target) : target) === currentToken();
@@ -77,6 +76,9 @@ export const compilationEngine = ({
     print(toLineWithIndent('<class>', indentLevel));
     indentLevel += 1;
     process('class', exactly, indentLevel);
+    classSymbolTable = symbolTable();
+    subroutineSymbolTable = symbolTable();
+    className = currentToken().toString();
 
     const extendedClassName = `name: ${currentToken()}, category: class, index: none, usage: declared`;
     process(extendedClassName, isStringStartsWithCapital, indentLevel); // className
@@ -129,7 +131,8 @@ export const compilationEngine = ({
     whileStatementCount = -1;
     print(toLineWithIndent('<subroutineDec>', indentLevel));
     indentLevel += 1;
-    process(currentToken(), isSubroutineKeyword, indentLevel);
+    const keyword = currentToken(); // constructor | function | method
+    process(keyword, isSubroutineKeyword, indentLevel);
     process(currentToken(), isString, indentLevel); // type
 
     const name = currentToken().toString(); // subroutineName
@@ -139,7 +142,7 @@ export const compilationEngine = ({
     process('(', exactly, indentLevel);
     compileParameterList();
     process(')', exactly, indentLevel);
-    compileSubroutineBody(name);
+    compileSubroutineBody(name, keyword as string);
 
     indentLevel -= 1;
     print(toLineWithIndent('</subroutineDec>', indentLevel));
@@ -173,7 +176,7 @@ export const compilationEngine = ({
     print(toLineWithIndent('</parameterList>', indentLevel));
   };
 
-  const compileSubroutineBody = (subroutineName: string) => {
+  const compileSubroutineBody = (subroutineName: string, subroutineKeyword: string) => {
     print(toLineWithIndent('<subroutineBody>', indentLevel));
     indentLevel += 1;
     process('{', exactly, indentLevel);
@@ -182,6 +185,16 @@ export const compilationEngine = ({
     }
 
     codeGenerator.writeFunction(subroutineName, subroutineSymbolTable.varCount('var'));
+
+    if (subroutineKeyword === 'constructor') {
+      codeGenerator.writePush('CONST', classSymbolTable.varCount('field'));
+      codeGenerator.writeCall('Memory.alloc', 1);
+      codeGenerator.writePop('POINTER', 0);
+    } else if (subroutineKeyword === 'method') {
+      codeGenerator.writePush('ARGUMENT', 0);
+      codeGenerator.writePop('POINTER', 0);
+    }
+
     compileStatements();
     process('}', exactly, indentLevel);
     indentLevel -= 1;
@@ -260,9 +273,12 @@ export const compilationEngine = ({
     process('=', exactly, indentLevel);
     compileExpression();
     process(';', exactly, indentLevel);
+    const varKind = subroutineSymbolTable.kindOf(name);
     codeGenerator.writePop(
-      subroutineSymbolTable.kindOf(name) === 'var' ? 'LOCAL' : 'ARGUMENT',
-      subroutineSymbolTable.indexOf(name),
+      varKind === 'var' ? 'LOCAL' : varKind === 'arg' ? 'ARGUMENT' : 'THIS',
+      varKind === 'var' || varKind === 'arg'
+        ? subroutineSymbolTable.indexOf(name)
+        : classSymbolTable.indexOf(name),
     );
 
     indentLevel -= 1;
@@ -290,8 +306,10 @@ export const compilationEngine = ({
       codeGenerator.writeLabel(`IF_FALSE${localIfStatementCount}`);
       compileStatements();
       process('}', exactly, indentLevel);
+      codeGenerator.writeLabel(`IF_END${localIfStatementCount}`);
+    } else {
+      codeGenerator.writeLabel(`IF_FALSE${localIfStatementCount}`);
     }
-    codeGenerator.writeLabel(`IF_END${localIfStatementCount}`);
     indentLevel -= 1;
     print(toLineWithIndent('</ifStatement>', indentLevel));
   };
@@ -324,14 +342,38 @@ export const compilationEngine = ({
     indentLevel += 1;
     process('do', exactly, indentLevel);
     const name = currentToken().toString(); // subroutineName | className | varName
-    subroutineName = name;
-    const extendedName = `name: ${name}, category: class, index: ${subroutineSymbolTable.indexOf(
-      name,
-    )}, usage: used`;
-    process(extendedName, isString, indentLevel);
+    if (subroutineSymbolTable.kindOf(name) !== 'none') {
+      const kind = subroutineSymbolTable.kindOf(name);
+      codeGenerator.writePush(
+        kind === 'var' ? 'LOCAL' : kind === 'arg' ? 'ARGUMENT' : 'POINTER',
+        kind === 'var' || kind === 'arg'
+          ? subroutineSymbolTable.indexOf(name)
+          : classSymbolTable.indexOf(name),
+      );
+      subroutineName = subroutineSymbolTable.typeOf(name);
+      argCount += 1;
+    } else if (classSymbolTable.kindOf(name) !== 'none') {
+      const kind = classSymbolTable.kindOf(name);
+      codeGenerator.writePush(
+        kind === 'static' ? 'STATIC' : kind === 'field' ? 'THIS' : 'POINTER',
+        classSymbolTable.indexOf(name),
+      );
+      subroutineName = classSymbolTable.typeOf(name);
+      argCount += 1;
+    } else {
+      if (isStringStartsWithCapital(name)) {
+        subroutineName = name;
+      } else {
+        codeGenerator.writePush('POINTER', 0);
+        subroutineName = `${className}.${name}`;
+        argCount += 1;
+      }
+    }
+
+    process(name, isString, indentLevel);
     if (currentToken() === '(') {
       process('(', exactly, indentLevel);
-      argCount = compileExpressionList();
+      argCount += compileExpressionList();
       process(')', exactly, indentLevel);
     } else if (currentToken() === '.') {
       process('.', exactly, indentLevel);
@@ -340,7 +382,7 @@ export const compilationEngine = ({
       const extendedSubroutineName = `name: ${name}, category: subroutine, index: none, usage: used`;
       process(extendedSubroutineName, isString, indentLevel);
       process('(', exactly, indentLevel);
-      argCount = compileExpressionList();
+      argCount += compileExpressionList();
       process(')', exactly, indentLevel);
     }
     process(';', exactly, indentLevel);
@@ -473,9 +515,12 @@ export const compilationEngine = ({
             withoutAdvance: true,
             givenType: savedTokenType,
           });
+          const varKind = subroutineSymbolTable.kindOf(varName);
           codeGenerator.writePush(
-            subroutineSymbolTable.kindOf(varName) === 'var' ? 'LOCAL' : 'ARGUMENT',
-            subroutineSymbolTable.indexOf(varName),
+            varKind === 'var' ? 'LOCAL' : varKind === 'arg' ? 'ARGUMENT' : 'THIS',
+            varKind === 'var' || varKind === 'arg'
+              ? subroutineSymbolTable.indexOf(varName)
+              : classSymbolTable.indexOf(varName),
           );
         }
         if (functionName.length !== 0) {

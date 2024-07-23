@@ -6,61 +6,61 @@ import { readFilePromise } from '../src/readFilePromise';
 describe('Square', () => {
   it('should compile Main.jack', async () => {
     const jackPath = './test/res/Square/Main.jack';
-    const xmlPath = './test/res/Square/Main.xml';
-    const expectedXmlPath = './test/compare/Square/Main.xml';
+    const vmPath = './test/res/Square/Main.vm';
+    const expectedVmPath = './test/compare/Square/Main.vm';
 
     await fileTestTemplate(async () => {
       await jackAnalyzer(jackPath);
 
-      const [xml, expectedXml] = await Promise.all([
-        readFilePromise(xmlPath),
-        readFilePromise(expectedXmlPath),
+      const [vm, expectedVm] = await Promise.all([
+        readFilePromise(vmPath),
+        readFilePromise(expectedVmPath),
       ]);
 
-      expect(xml).toBe(expectedXml.replace(/\r/g, '').trim());
-    }, xmlPath);
+      expect(vm).toBe(expectedVm.replace(/\r/g, ''));
+    }, vmPath);
   });
 
   it('should compile Square.jack', async () => {
     const jackPath = './test/res/Square/Square.jack';
-    const xmlPath = './test/res/Square/Square.xml';
-    const expectedXmlPath = './test/compare/Square/Square.xml';
+    const vmPath = './test/res/Square/Square.vm';
+    const expectedVmPath = './test/compare/Square/Square.vm';
 
     await fileTestTemplate(async () => {
       await jackAnalyzer(jackPath);
 
-      const [xml, expectedXml] = await Promise.all([
-        readFilePromise(xmlPath),
-        readFilePromise(expectedXmlPath),
+      const [vm, expectedVm] = await Promise.all([
+        readFilePromise(vmPath),
+        readFilePromise(expectedVmPath),
       ]);
 
-      expect(xml).toBe(expectedXml.replace(/\r/g, '').trim());
-    }, xmlPath);
+      expect(vm).toBe(expectedVm.replace(/\r/g, ''));
+    }, vmPath);
   });
 
   it('should compile SquareGame.jack', async () => {
     const jackPath = './test/res/Square/SquareGame.jack';
-    const xmlPath = './test/res/Square/SquareGame.xml';
-    const expectedXmlPath = './test/compare/Square/SquareGame.xml';
+    const vmPath = './test/res/Square/SquareGame.vm';
+    const expectedVmPath = './test/compare/Square/SquareGame.vm';
 
     await fileTestTemplate(async () => {
       await jackAnalyzer(jackPath);
 
-      const [xml, expectedXml] = await Promise.all([
-        readFilePromise(xmlPath),
-        readFilePromise(expectedXmlPath),
+      const [vm, expectedVm] = await Promise.all([
+        readFilePromise(vmPath),
+        readFilePromise(expectedVmPath),
       ]);
 
-      expect(xml).toBe(expectedXml.replace(/\r/g, '').trim());
-    }, xmlPath);
+      expect(vm).toBe(expectedVm.replace(/\r/g, ''));
+    }, vmPath);
   });
 
   it('should compile a directory', async () => {
     await fileTestTemplate(
       () => jackAnalyzer('./test/res/Square'),
-      './test/res/Square/Square.xml',
-      './test/res/Square/SquareGame.xml',
-      './test/res/Square/Main.xml',
+      './test/res/Square/Square.vm',
+      './test/res/Square/SquareGame.vm',
+      './test/res/Square/Main.vm',
     );
   });
 });

@@ -135,6 +135,10 @@ export const compilationEngine = ({
     process(keyword, isSubroutineKeyword, indentLevel);
     process(currentToken(), isString, indentLevel); // type
 
+    if (keyword === 'method') {
+      subroutineSymbolTable.define('this', className, 'arg');
+    }
+
     const name = currentToken().toString(); // subroutineName
     const extendedSubroutineName = `name: ${name}, category: subroutine, index: none, usage: declared`;
     process(extendedSubroutineName, isString, indentLevel);
@@ -274,8 +278,17 @@ export const compilationEngine = ({
     compileExpression();
     process(';', exactly, indentLevel);
     const varKind = subroutineSymbolTable.kindOf(name);
+    const className = classSymbolTable.kindOf(name);
     codeGenerator.writePop(
-      varKind === 'var' ? 'LOCAL' : varKind === 'arg' ? 'ARGUMENT' : 'THIS',
+      varKind === 'var'
+        ? 'LOCAL'
+        : varKind === 'arg'
+        ? 'ARGUMENT'
+        : className === 'static'
+        ? 'STATIC'
+        : className === 'field'
+        ? 'THIS'
+        : 'THIS',
       varKind === 'var' || varKind === 'arg'
         ? subroutineSymbolTable.indexOf(name)
         : classSymbolTable.indexOf(name),
@@ -516,15 +529,32 @@ export const compilationEngine = ({
             givenType: savedTokenType,
           });
           const varKind = subroutineSymbolTable.kindOf(varName);
+          const className = classSymbolTable.kindOf(varName);
           codeGenerator.writePush(
-            varKind === 'var' ? 'LOCAL' : varKind === 'arg' ? 'ARGUMENT' : 'THIS',
+            varKind === 'var'
+              ? 'LOCAL'
+              : varKind === 'arg'
+              ? 'ARGUMENT'
+              : className === 'static'
+              ? 'STATIC'
+              : className === 'field'
+              ? 'THIS'
+              : 'THIS',
             varKind === 'var' || varKind === 'arg'
               ? subroutineSymbolTable.indexOf(varName)
               : classSymbolTable.indexOf(varName),
           );
         }
         if (functionName.length !== 0) {
-          codeGenerator.writeCall(functionName, argCount);
+          if (!isStringStartsWithCapital(functionName)) {
+            const splitFunctionName = functionName.split('.');
+            const className = classSymbolTable.typeOf(splitFunctionName[0]);
+            const index = classSymbolTable.indexOf(splitFunctionName[0]);
+            codeGenerator.writePush('THIS', index);
+            codeGenerator.writeCall(`${className}.${splitFunctionName[1]}`, argCount + 1);
+          } else {
+            codeGenerator.writeCall(functionName, argCount);
+          }
         }
       } else if (savedTokenType === 'INT_CONST') {
         process(savedToken, isNumber, indentLevel);

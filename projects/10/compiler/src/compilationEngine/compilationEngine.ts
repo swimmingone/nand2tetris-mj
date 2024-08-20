@@ -261,6 +261,7 @@ export const compilationEngine = ({
   };
 
   const compileLet = () => {
+    let isArray = false;
     print(toLineWithIndent('<letStatement>', indentLevel));
     indentLevel += 1;
     process('let', exactly, indentLevel);
@@ -270,8 +271,11 @@ export const compilationEngine = ({
     )}, index: ${subroutineSymbolTable.indexOf(name)}, usage: used`;
     process(extendedVarName, isString, indentLevel); // varName
     if (currentToken() === '[') {
+      isArray = true;
       process('[', exactly, indentLevel);
       compileExpression();
+      codeGenerator.writePush('LOCAL', subroutineSymbolTable.indexOf(name));
+      codeGenerator.writeArithmetic('ADD');
       process(']', exactly, indentLevel);
     }
     process('=', exactly, indentLevel);
@@ -279,20 +283,28 @@ export const compilationEngine = ({
     process(';', exactly, indentLevel);
     const varKind = subroutineSymbolTable.kindOf(name);
     const className = classSymbolTable.kindOf(name);
-    codeGenerator.writePop(
-      varKind === 'var'
-        ? 'LOCAL'
-        : varKind === 'arg'
-        ? 'ARGUMENT'
-        : className === 'static'
-        ? 'STATIC'
-        : className === 'field'
-        ? 'THIS'
-        : 'THIS',
-      varKind === 'var' || varKind === 'arg'
-        ? subroutineSymbolTable.indexOf(name)
-        : classSymbolTable.indexOf(name),
-    );
+
+    if (isArray) {
+      codeGenerator.writePop('TEMP', 0);
+      codeGenerator.writePop('POINTER', 1);
+      codeGenerator.writePush('TEMP', 0);
+      codeGenerator.writePop('THAT', 0);
+    } else {
+      codeGenerator.writePop(
+        varKind === 'var'
+          ? 'LOCAL'
+          : varKind === 'arg'
+          ? 'ARGUMENT'
+          : className === 'static'
+          ? 'STATIC'
+          : className === 'field'
+          ? 'THIS'
+          : 'THIS',
+        varKind === 'var' || varKind === 'arg'
+          ? subroutineSymbolTable.indexOf(name)
+          : classSymbolTable.indexOf(name),
+      );
+    }
 
     indentLevel -= 1;
     print(toLineWithIndent('</letStatement>', indentLevel));
@@ -484,15 +496,17 @@ export const compilationEngine = ({
           const extendedVarName = `name: ${varName}, category: ${subroutineSymbolTable.kindOf(
             varName,
           )}, index: ${subroutineSymbolTable.indexOf(varName)}, usage: used`;
-          codeGenerator.writePop('LOCAL', subroutineSymbolTable.indexOf(varName));
-          codeGenerator.writePush('LOCAL', subroutineSymbolTable.indexOf(varName));
           process(extendedVarName, () => true, indentLevel, {
             withoutAdvance: true,
             givenType: savedTokenType,
           });
           process('[', exactly, indentLevel);
           compileExpression();
+          codeGenerator.writePush('LOCAL', subroutineSymbolTable.indexOf(varName));
+          codeGenerator.writeArithmetic('ADD');
+          codeGenerator.writePop('POINTER', 1);
           process(']', exactly, indentLevel);
+          codeGenerator.writePush('THAT', 0);
         } else if (nextToken === '(') {
           const subroutineName = savedToken.toString();
           functionName = subroutineName;

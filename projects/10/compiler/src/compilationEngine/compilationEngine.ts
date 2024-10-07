@@ -274,7 +274,10 @@ export const compilationEngine = ({
       isArray = true;
       process('[', exactly, indentLevel);
       compileExpression();
-      codeGenerator.writePush('LOCAL', subroutineSymbolTable.indexOf(name));
+      codeGenerator.writePush(
+        subroutineSymbolTable.kindOf(name) === 'var' ? 'LOCAL' : 'ARGUMENT',
+        subroutineSymbolTable.indexOf(name),
+      );
       codeGenerator.writeArithmetic('ADD');
       process(']', exactly, indentLevel);
     }
